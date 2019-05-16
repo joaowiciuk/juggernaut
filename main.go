@@ -21,7 +21,7 @@ func init() {
 
 func main() {
 	router := mux.NewRouter()
-	router.HandleFunc("/hello", helloWorldHandler).Methods("GET")
+	router.HandleFunc("/helloWorld", helloWorldHandler).Methods("GET")
 	//Comentário
 	http.ListenAndServe(":8181", router)
 }
