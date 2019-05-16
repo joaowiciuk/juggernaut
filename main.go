@@ -22,7 +22,7 @@ func init() {
 func main() {
 	router := mux.NewRouter()
 	router.HandleFunc("/olá", olaHandler).Methods("GET")
-	adaptadorBluetooth()
+	//adaptadorBluetooth()
 	http.ListenAndServe(":8181", router)
 }
 
