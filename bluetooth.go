@@ -33,6 +33,7 @@ func adaptadorBluetooth() {
 		}
 	}
 	d.Init(onStateChanged)
+	log.Printf("Finalizando manipulador de dispositivo bluetooth\n")
 }
 
 func aoConectar(c gatt.Central) {

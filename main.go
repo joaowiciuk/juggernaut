@@ -20,10 +20,12 @@ func init() {
 }
 
 func main() {
+	log.Printf("Iniciando função principal\n")
 	router := mux.NewRouter()
 	router.HandleFunc("/olá", olaHandler).Methods("GET")
 	adaptadorBluetooth()
 	http.ListenAndServe(":8181", router)
+	log.Printf("Finalizando função principal\n")
 }
 
 func olaHandler(w http.ResponseWriter, r *http.Request) {
