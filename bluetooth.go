@@ -34,6 +34,7 @@ func adaptadorBluetooth() {
 		}
 	}
 	d.Init(onStateChanged)
+	select {}
 }
 
 func aoConectar(c gatt.Central) {
