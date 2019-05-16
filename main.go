@@ -21,7 +21,7 @@ func init() {
 
 func main() {
 	router := mux.NewRouter()
-	router.HandleFunc("/olá", helloWorldHandler).Methods("GET")
+	router.HandleFunc("/olá", olaHandler).Methods("GET")
 	http.ListenAndServe(":8181", router)
 }
 
