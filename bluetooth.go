@@ -12,7 +12,7 @@ import (
 func adaptadorBluetooth() {
 	d, err := gatt.NewDevice(option.DefaultServerOptions...)
 	if err != nil {
-		log.Fatalf("Failed to open device, err: %s", err)
+		log.Printf("Falha ao manipular dispositivo bluetooth, err: %s\n", err)
 	}
 	d.Handle(
 		gatt.CentralConnected(aoConectar),
