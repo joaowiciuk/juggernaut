@@ -14,43 +14,24 @@ func adaptadorBluetooth() {
 	if err != nil {
 		log.Fatalf("Failed to open device, err: %s", err)
 	}
-	// Register optional handlers.
 	d.Handle(
 		gatt.CentralConnected(aoConectar),
 		gatt.CentralDisconnected(aoDesconectar),
 	)
-	// A mandatory handler for monitoring device state.
 	onStateChanged := func(d gatt.Device, s gatt.State) {
 		fmt.Printf("State: %s\n", s)
 		switch s {
 		case gatt.StatePoweredOn:
-			// Setup GAP and GATT services for Linux implementation.
-			// OS X doesn't export the access of these services.
-			d.AddService(service.NewGapService("Gopher")) // no effect on OS X
-			d.AddService(service.NewGattService())        // no effect on OS X
-
-			// A simple count service for demo.
-			s1 := service.NewCountService()
+			d.AddService(service.NewGapService("Solutech Home Connect 1"))
+			d.AddService(service.NewGattService())
+			s1 := aproxDePI()
 			d.AddService(s1)
-
-			// A fake battery service for demo.
-			s2 := service.NewBatteryService()
-			d.AddService(s2)
-
-			// Aproximação de PI
-			s3 := aproxDePI()
-			d.AddService(s3)
-
-			// Advertise device name and service's UUIDs.
-			d.AdvertiseNameAndServices("Gopher", []gatt.UUID{s1.UUID(), s2.UUID(), s3.UUID()})
-
-			// Advertise as an OpenBeacon iBeacon
+			d.AdvertiseNameAndServices("Solutech Home Connect 1", []gatt.UUID{s1.UUID()})
 			d.AdvertiseIBeacon(gatt.MustParseUUID("AA6062F098CA42118EC4193EB73CCEB6"), 1, 2, -59)
 
 		default:
 		}
 	}
-
 	d.Init(onStateChanged)
 }
 
