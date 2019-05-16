@@ -10,6 +10,7 @@ import (
 )
 
 func adaptadorBluetooth() {
+	log.Printf("Iniciando manipulador de dispositivo bluetooth\n")
 	d, err := gatt.NewDevice(option.DefaultServerOptions...)
 	if err != nil {
 		log.Printf("Falha ao manipular dispositivo bluetooth, err: %s\n", err)
