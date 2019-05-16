@@ -25,6 +25,7 @@ func init() {
 func main() {
 	router := mux.NewRouter()
 	router.HandleFunc("/hello", helloWorldHandler).Methods("GET")
+	//adaptadorBluetooth()
 	http.ListenAndServe(":8181", router)
 }
 
