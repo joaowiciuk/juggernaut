@@ -33,7 +33,6 @@ func adaptadorBluetooth() {
 		}
 	}
 	d.Init(onStateChanged)
-	log.Printf("Finalizando manipulador de dispositivo bluetooth\n")
 }
 
 func aoConectar(c gatt.Central) {
@@ -54,7 +53,7 @@ func aproxDePI() *gatt.Service {
 	s.AddCharacteristic(gatt.MustParseUUID("45fac9e0-c111-11e3-9246-0002a5d5c51b")).HandleWriteFunc(
 		func(r gatt.Request, data []byte) (status byte) {
 			log.Printf("Requisição para escrita\n")
-			log.Printf("$d bytes recebidos\n", len(data))
+			log.Printf("%d bytes recebidos\n", len(data))
 			return gatt.StatusSuccess
 		})
 	return s
