@@ -17,7 +17,7 @@ func init() {
 		log.Fatalf("error opening log file: %v", err)
 	}
 	defer logFile.Close()
-	logger = log.New(logFile, nil, log.Lshortfile|log.LstdFlags)
+	logger = log.New(logFile, "", log.Lshortfile|log.LstdFlags)
 	logger.Printf("Juggernaut iniciado\n")
 }
 
