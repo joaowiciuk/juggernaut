@@ -21,11 +21,10 @@ func init() {
 
 func main() {
 	router := mux.NewRouter()
-	router.HandleFunc("/hello", helloWorldHandler).Methods("GET")
-	//Comentário
+	router.HandleFunc("/olá", helloWorldHandler).Methods("GET")
 	http.ListenAndServe(":8181", router)
 }
 
-func helloWorldHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Hello, world!\n")
+func olaHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintf(w, "Olá, mundo!\n")
 }
