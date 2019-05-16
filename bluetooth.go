@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"log"
-	"time"
 
 	"github.com/paypal/gatt"
 	"github.com/paypal/gatt/examples/option"
@@ -56,29 +55,23 @@ func adaptadorBluetooth() {
 }
 
 func aoConectar(c gatt.Central) {
-	data := time.Now()
-	dataTexto := data.Format("Monday 02-01-2006 15:04:05")
-	log.Printf("%s: %s conectou-se.\n", dataTexto, c.ID())
+	log.Printf("%s conectou-se.\n", c.ID())
 }
 
 func aoDesconectar(c gatt.Central) {
-	data := time.Now()
-	dataTexto := data.Format("Monday 02-01-2006 15:04:05")
-	log.Printf("%s: %s desconectou-se.\n", dataTexto, c.ID())
+	log.Printf("%s desconectou-se.\n", c.ID())
 }
 
 func aproxDePI() *gatt.Service {
 	s := gatt.NewService(gatt.MustParseUUID("19fc95c0-c111-11e3-9904-0002a5d5c51b"))
-	data := time.Now()
-	dataTexto := data.Format("Monday 02-01-2006 15:04:05")
 	s.AddCharacteristic(gatt.MustParseUUID("44fac9e0-c111-11e3-9246-0002a5d5c51b")).HandleReadFunc(
 		func(rsp gatt.ResponseWriter, req *gatt.ReadRequest) {
-			log.Printf("Aproximação de PI solicitada em %s.\n", dataTexto)
+			log.Printf("Aproximação de PI solicitada.\n")
 			fmt.Fprintf(rsp, "3.14159")
 		})
 	s.AddCharacteristic(gatt.MustParseUUID("45fac9e0-c111-11e3-9246-0002a5d5c51b")).HandleWriteFunc(
 		func(r gatt.Request, data []byte) (status byte) {
-			log.Printf("Requisição para escrita em %s.\n", dataTexto)
+			log.Printf("Requisição para escrita.\n")
 			return gatt.StatusSuccess
 		})
 	return s

@@ -2,7 +2,6 @@ package main
 
 import (
 	"log"
-	"time"
 
 	rpio "github.com/stianeikeland/go-rpio"
 )
@@ -14,10 +13,8 @@ type rele struct {
 
 func (r *rele) acionar() {
 	if err := rpio.Open(); err != nil {
-		data := time.Now()
-		dataTexto := data.Format("Monday 02-01-2006 15:04:05")
-		log.Printf("%s: Erro ao acionar relé\n", dataTexto)
-		log.Panicf("%s: %v", dataTexto, *r)
+		log.Printf("Erro ao acionar relé\n")
+		log.Panicf("%v", *r)
 	}
 	defer rpio.Close()
 	pin := rpio.Pin(r.pino)

@@ -5,7 +5,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"time"
 
 	"github.com/gorilla/mux"
 )
@@ -17,9 +16,7 @@ func init() {
 	}
 	defer logFile.Close()
 	log.SetOutput(logFile)
-	data := time.Now()
-	dataTexto := data.Format("Monday 02-01-2006 15:04:05")
-	log.Printf("Juggernaut iniciado em %s\n", dataTexto)
+	log.Printf("Juggernaut iniciado\n")
 }
 
 func main() {
