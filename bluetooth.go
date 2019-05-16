@@ -29,12 +29,10 @@ func adaptadorBluetooth() {
 			d.AddService(s1)
 			d.AdvertiseNameAndServices("Solutech Home Connect 1", []gatt.UUID{s1.UUID()})
 			d.AdvertiseIBeacon(gatt.MustParseUUID("AA6062F098CA42118EC4193EB73CCEB6"), 1, 2, -59)
-
 		default:
 		}
 	}
 	d.Init(onStateChanged)
-	select {}
 }
 
 func aoConectar(c gatt.Central) {
@@ -54,7 +52,8 @@ func aproxDePI() *gatt.Service {
 		})
 	s.AddCharacteristic(gatt.MustParseUUID("45fac9e0-c111-11e3-9246-0002a5d5c51b")).HandleWriteFunc(
 		func(r gatt.Request, data []byte) (status byte) {
-			log.Printf("Requisição para escrita.\n")
+			log.Printf("Requisição para escrita\n")
+			log.Printf("$d bytes recebidos\n", len(data))
 			return gatt.StatusSuccess
 		})
 	return s
