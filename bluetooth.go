@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"logger"
 
 	"github.com/paypal/gatt"
 	"github.com/paypal/gatt/examples/option"
