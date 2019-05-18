@@ -1,6 +1,7 @@
 package main
 
-func auditar(p periferico) {
-	//Verificar segurança
-	p.acionar()
+type auditor interface {
+	inicializar(endereco string) (err error)
+	finalizar()
+	auditar(r requisicao) (ok bool)
 }

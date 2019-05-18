@@ -23,11 +23,24 @@ func init() {
 func main() {
 	defer logFile.Close()
 	log.Printf("Iniciando função principal\n")
+
 	router := mux.NewRouter()
 	router.HandleFunc("/olá", olaHandler).Methods("GET")
-	adaptadorBluetooth()
+
+	adaptadorBluetooth := newAdaptadorBluetooth()
+	if err := adaptadorBluetooth.inicializar("registro_adaptador_bluetooth"); err != nil {
+		log.Fatalf("Falha ao inicializar adaptador bluetooth\n")
+	}
+	defer adaptadorBluetooth.finalizar()
+
+	auditorSimples := newAuditorSimples()
+	if err := auditorSimples.inicializar("registro_auditor"); err != nil {
+		log.Fatalf("Falha ao inicializar auditor\n")
+	}
+	defer auditorSimples.finalizar()
+
 	http.ListenAndServe(":8181", router)
-	log.Printf("Finalizando função principal\n")
+	log.Printf("Finalizando função principal...\n")
 }
 
 func olaHandler(w http.ResponseWriter, r *http.Request) {
