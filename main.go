@@ -12,7 +12,7 @@ import (
 var logFile *os.File
 
 func init() {
-	logFile, err := os.OpenFile("log", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0666)
+	logFile, err := os.OpenFile("registro_principal", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0666)
 	if err != nil {
 		log.Fatalf("error opening log file: %v", err)
 	}
