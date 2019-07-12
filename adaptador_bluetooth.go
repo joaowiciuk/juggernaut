@@ -75,7 +75,7 @@ func (a *adaptadorBluetooth) servicoRedes() *gatt.Service {
 				return
 			}
 			rsp.SetStatus(gatt.StatusSuccess)
-			rsp.Write([]byte(SSIDs))
+			fmt.Fprintf(rsp, "%s\n", SSIDs)
 		})
 
 	return s
