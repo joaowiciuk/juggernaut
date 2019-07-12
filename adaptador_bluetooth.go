@@ -120,6 +120,15 @@ func (a *adaptadorBluetooth) servicoRedes() *gatt.Service {
 			for !n.Done() && index < len(ssids) {
 				fmt.Fprintf(n, "%s", ssids[index])
 				index++
+			}
+		})
+
+	s.AddCharacteristic(gatt.MustParseUUID("1c927b50-c116-11e3-8a33-0800200c9a66")).HandleNotifyFunc(
+		func(r gatt.Request, n gatt.Notifier) {
+			cnt := 0
+			for !n.Done() {
+				fmt.Fprintf(n, "Count: %d", cnt)
+				cnt++
 				time.Sleep(time.Second)
 			}
 		})
