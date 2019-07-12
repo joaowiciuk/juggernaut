@@ -133,7 +133,7 @@ func (a *adaptadorBluetooth) descobertaWifi() *gatt.Service {
 	caracSSIDs.AddDescriptor(gatt.UUID16(0x2904)).SetValue([]byte("Base 64 encoded"))
 	caracSSIDs.AddDescriptor(gatt.UUID16(0x2901)).SetValue([]byte("Available ssids for connection"))
 
-	caracSolicitarDesc := s.AddCharacteristic(gatt.UUID16(0x2A04))
+	caracSolicitarDesc := s.AddCharacteristic(gatt.MustParseUUID("351e784a-4099-405e-8031-e4b473e668a4"))
 	caracSolicitarDesc.HandleWriteFunc(func(r gatt.Request, data []byte) (status byte) {
 		if string(data) == "sim" {
 			a.descSSIDS = true
@@ -142,6 +142,7 @@ func (a *adaptadorBluetooth) descobertaWifi() *gatt.Service {
 	})
 	caracSSIDs.AddDescriptor(gatt.UUID16(0x2901)).SetValue([]byte("Request ssids for connection"))
 	caracSSIDs.AddDescriptor(gatt.UUID16(0x2906)).SetValue([]byte("\"yes\" or \"no\""))
+
 	return s
 }
 
