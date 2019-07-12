@@ -55,6 +55,8 @@ func (a *adaptadorBluetooth) descobertaWifi() *gatt.Service {
 				return
 			}
 
+			a.registrador.Printf("Descoberta de SSIDs iniciada pelo servidor GATT")
+
 			//Comando para verificar redes wifi disponíveis
 			cmd := exec.Command("/bin/sh", "-c", "sudo iw dev wlan0 scan | grep SSID")
 
@@ -113,10 +115,7 @@ func (a *adaptadorBluetooth) descobertaWifi() *gatt.Service {
 				k, err := ssidsSource.Read(bufferTransf)
 
 				//registra o buffer de transferência
-				a.registrador.Printf("k = %v err = %v bufferTransf = %v\n", k, err, bufferTransf)
-
-				//registra o buffer de transferência
-				a.registrador.Printf("bufferTransf[:k] = %q\n", bufferTransf[:k])
+				a.registrador.Printf("bufferTransf[:%d] = %q\n", k, bufferTransf[:k])
 
 				//envia o buffer de transferência pelo notifier
 				fmt.Fprintf(notifier, "%s", bufferTransf[:k])
@@ -125,9 +124,10 @@ func (a *adaptadorBluetooth) descobertaWifi() *gatt.Service {
 				}
 			}
 
+			a.registrador.Printf("Descoberta de SSIDs finalizada pelo servidor GATT")
+			a.descSSIDS = false
 			//Aguarda 10 segundos até a próxima verificação, caso seja solicitada
 			time.Sleep(time.Second * 10)
-			a.descSSIDS = false
 		}
 	})
 
