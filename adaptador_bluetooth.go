@@ -51,7 +51,7 @@ func (a *adaptadorBluetooth) servicoPrincipal() *gatt.Service {
 
 func (a *adaptadorBluetooth) servicoRedes() *gatt.Service {
 
-	s := gatt.NewService(gatt.UUID16(0x180F))
+	s := gatt.NewService(gatt.UUID16(0x1800))
 	c := s.AddCharacteristic(gatt.UUID16(0x2A19))
 
 	c.HandleReadFunc(
@@ -62,7 +62,8 @@ func (a *adaptadorBluetooth) servicoRedes() *gatt.Service {
 			buf := new(bytes.Buffer)
 			buf.ReadFrom(stdout)
 			SSIDs := buf.String()
-			rsp.Write([]byte(SSIDs))
+			log.Println(SSIDs)
+			rsp.Write([]byte("ERRO"))
 		})
 
 	// FIXME: this cause connection interrupted on Mac.
