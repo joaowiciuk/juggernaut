@@ -76,7 +76,7 @@ func (a *adaptadorBluetooth) servicoRedes() *gatt.Service {
 			}
 			re := regexp.MustCompile(`SSID:\ (.*)`)
 			ssids := re.FindAllString(output, -1)
-			for _, ssid := range ssids[1:len(ssids)] {
+			for _, ssid := range ssids {
 				fmt.Println(ssid)
 			}
 			if len(ssids) < 2 {
@@ -85,7 +85,7 @@ func (a *adaptadorBluetooth) servicoRedes() *gatt.Service {
 				return
 			}
 			rsp.SetStatus(gatt.StatusSuccess)
-			fmt.Fprintf(rsp, "%s", strings.Join(ssids[1:len(ssids)], ","))
+			fmt.Fprintf(rsp, "%s", strings.Join(ssids, ","))
 		})
 
 	s.AddCharacteristic(gatt.MustParseUUID("87a040df-b13f-46d3-be03-ade57dcf1f07")).HandleNotifyFunc(
@@ -109,17 +109,19 @@ func (a *adaptadorBluetooth) servicoRedes() *gatt.Service {
 			}
 			re := regexp.MustCompile(`SSID:\ (.*)`)
 			ssids := re.FindAllString(output, -1)
-			for _, ssid := range ssids[1:len(ssids)] {
+			for _, ssid := range ssids {
 				fmt.Println(ssid)
 			}
 			if len(ssids) < 2 {
 				fmt.Printf("error: no ssid")
 				return
 			}
-			index := 1
-			for !n.Done() && index < len(ssids) {
-				fmt.Fprintf(n, "%s", ssids[index])
-				index++
+			for !n.Done() {
+				for _, ssid := range ssids {
+					fmt.Println(ssid)
+					fmt.Fprintf(n, "%s", ssid)
+					time.Sleep(time.Second)
+				}
 			}
 		})
 
