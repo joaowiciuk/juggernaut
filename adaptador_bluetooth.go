@@ -60,16 +60,19 @@ func (a *adaptadorBluetooth) servicoRedes() *gatt.Service {
 			cmd := exec.Command("/bin/sh", "-c", "sudo iw dev wlan0 scan | grep SSID")
 			stdout, err := cmd.StdoutPipe()
 			if err != nil {
-				log.Fatal(err)
+				fmt.Println(err)
+				return
 			}
 			if err := cmd.Start(); err != nil {
-				log.Fatal(err)
+				fmt.Println(err)
+				return
 			}
 			buf := new(bytes.Buffer)
 			buf.ReadFrom(stdout)
 			output := buf.String()
 			if err := cmd.Wait(); err != nil {
-				log.Fatal(err)
+				fmt.Println(err)
+				return
 			}
 			re := regexp.MustCompile(`SSID:\ (.*)`)
 			ssids := re.FindStringSubmatch(output)
@@ -90,16 +93,19 @@ func (a *adaptadorBluetooth) servicoRedes() *gatt.Service {
 			cmd := exec.Command("/bin/sh", "-c", "sudo iw dev wlan0 scan | grep SSID")
 			stdout, err := cmd.StdoutPipe()
 			if err != nil {
-				log.Fatal(err)
+				fmt.Println(err)
+				return
 			}
 			if err := cmd.Start(); err != nil {
-				log.Fatal(err)
+				fmt.Println(err)
+				return
 			}
 			buf := new(bytes.Buffer)
 			buf.ReadFrom(stdout)
 			output := buf.String()
 			if err := cmd.Wait(); err != nil {
-				log.Fatal(err)
+				fmt.Println(err)
+				return
 			}
 			re := regexp.MustCompile(`SSID:\ (.*)`)
 			ssids := re.FindStringSubmatch(output)
