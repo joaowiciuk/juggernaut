@@ -77,8 +77,8 @@ func (a *adaptadorBluetooth) descobertaWifi() *gatt.Service {
 				for _, ssid := range ssids {
 					a.registrador.Printf("%s\n", ssid)
 					fmt.Fprintf(n, "%s", ssid)
-					time.Sleep(time.Second)
 				}
+				time.Sleep(time.Second * 10)
 			}
 		})
 
