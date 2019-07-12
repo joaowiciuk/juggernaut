@@ -1,8 +1,10 @@
 package main
 
 import (
+	"bytes"
 	"log"
 	"os"
+	"os/exec"
 
 	"github.com/paypal/gatt"
 	"github.com/paypal/gatt/examples/option"
@@ -47,6 +49,32 @@ func (a *adaptadorBluetooth) servicoPrincipal() *gatt.Service {
 	return s
 }
 
+func (a *adaptadorBluetooth) servicoRedes() *gatt.Service {
+
+	s := gatt.NewService(gatt.UUID16(0x180F))
+	c := s.AddCharacteristic(gatt.UUID16(0x2A19))
+
+	c.HandleReadFunc(
+		func(rsp gatt.ResponseWriter, req *gatt.ReadRequest) {
+			cmd := exec.Command("sudo iw dev wlan0 scan | grep SSID")
+			stdout, _ := cmd.StdoutPipe()
+			cmd.Run()
+			buf := new(bytes.Buffer)
+			buf.ReadFrom(stdout)
+			SSIDs := buf.String()
+			rsp.Write([]byte(SSIDs))
+		})
+
+	// FIXME: this cause connection interrupted on Mac.
+	// Characteristic User Description
+	c.AddDescriptor(gatt.UUID16(0x2901)).SetValue([]byte("Redes wifi disponíveis"))
+
+	// Characteristic Presentation Format
+	//c.AddDescriptor(gatt.UUID16(0x2904)).SetValue([]byte{4, 1, 39, 173, 1, 0, 0})
+
+	return s
+}
+
 func (a *adaptadorBluetooth) inicializar(endereco string) error {
 	f, err := os.OpenFile(endereco, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0666)
 	if err != nil {
@@ -64,9 +92,14 @@ func (a *adaptadorBluetooth) inicializar(endereco string) error {
 		case gatt.StatePoweredOn:
 			d.AddService(service.NewGapService("Solutech Home Connect 1"))
 			d.AddService(service.NewGattService())
+
 			s1 := a.servicoPrincipal()
 			d.AddService(s1)
-			d.AdvertiseNameAndServices("Solutech Home Connect 1", []gatt.UUID{s1.UUID()})
+
+			s2 := a.servicoRedes()
+			d.AddService(s2)
+
+			d.AdvertiseNameAndServices("Solutech Home Connect 1", []gatt.UUID{s1.UUID(), s2.UUID()})
 			d.AdvertiseIBeacon(gatt.MustParseUUID("AA6062F098CA42118EC4193EB73CCEB6"), 1, 2, -59)
 		default:
 		}

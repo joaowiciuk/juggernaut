@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -41,13 +40,6 @@ func main() {
 	}
 	defer auditorSimples.finalizar()
 
-	//Manipuladores do adaptador Wifi
-	adaptadorWifi.adicionarManipulador(olaHandler, "/ola", "GET")
-
 	http.ListenAndServe(":8181", adaptadorWifi.roteador)
 	log.Printf("Finalizando função principal...\n")
-}
-
-func olaHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Hello world!\n")
 }
