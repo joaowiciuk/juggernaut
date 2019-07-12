@@ -5,8 +5,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-
-	"github.com/gorilla/mux"
 )
 
 var logFile *os.File
@@ -24,14 +22,18 @@ func main() {
 	defer logFile.Close()
 	log.Printf("Iniciando função principal\n")
 
-	router := mux.NewRouter()
-	router.HandleFunc("/olá", olaHandler).Methods("GET")
-
+	//Inicialização de adaptadores
 	adaptadorBluetooth := newAdaptadorBluetooth()
 	if err := adaptadorBluetooth.inicializar("registro_adaptador_bluetooth"); err != nil {
 		log.Fatalf("Falha ao inicializar adaptador bluetooth\n")
 	}
 	defer adaptadorBluetooth.finalizar()
+
+	adaptadorWifi := newAdaptadorWifi()
+	if err := adaptadorWifi.inicializar("registro_adaptador_Wifi"); err != nil {
+		log.Fatalf("Falha ao inicializar adaptador wifi\n")
+	}
+	defer adaptadorWifi.finalizar()
 
 	auditorSimples := newAuditorSimples()
 	if err := auditorSimples.inicializar("registro_auditor"); err != nil {
@@ -39,7 +41,10 @@ func main() {
 	}
 	defer auditorSimples.finalizar()
 
-	http.ListenAndServe(":8181", router)
+	//Manipuladores do adaptador Wifi
+	adaptadorWifi.adicionarManipulador(olaHandler, "/ola", "GET")
+
+	http.ListenAndServe(":8181", adaptadorWifi.roteador)
 	log.Printf("Finalizando função principal...\n")
 }
 
