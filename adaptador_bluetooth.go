@@ -57,40 +57,40 @@ func (a *adaptadorBluetooth) servicoRedes() *gatt.Service {
 
 	s.AddCharacteristic(gatt.MustParseUUID("87a040df-b13f-46d3-be03-ade57dcf1f07")).HandleNotifyFunc(
 		func(r gatt.Request, n gatt.Notifier) {
-
+			cmd := exec.Command("/bin/sh", "-c", "sudo iw dev wlan0 scan | grep SSID")
+			stdout, err := cmd.StdoutPipe()
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+			if err := cmd.Start(); err != nil {
+				fmt.Println(err)
+				return
+			}
+			buf := new(bytes.Buffer)
+			buf.ReadFrom(stdout)
+			output := buf.String()
+			if err := cmd.Wait(); err != nil {
+				fmt.Println(err)
+				return
+			}
+			re := regexp.MustCompile(`\ *SSID:\ (.*)`)
+			submatches := re.FindAllStringSubmatch(output, -1)
+			ssids := make([]string, 0)
+			for _, submatch := range submatches {
+				ssids = append(ssids, submatch[1])
+			}
+			if len(ssids) < 2 {
+				fmt.Printf("error: no ssid")
+				return
+			}
 			for !n.Done() {
-				cmd := exec.Command("/bin/sh", "-c", "sudo iw dev wlan0 scan | grep SSID")
-				stdout, err := cmd.StdoutPipe()
-				if err != nil {
-					fmt.Println(err)
-					return
-				}
-				if err := cmd.Start(); err != nil {
-					fmt.Println(err)
-					return
-				}
-				buf := new(bytes.Buffer)
-				buf.ReadFrom(stdout)
-				output := buf.String()
-				if err := cmd.Wait(); err != nil {
-					fmt.Println(err)
-					return
-				}
-				re := regexp.MustCompile(`\ *SSID:\ (.*)`)
-				submatches := re.FindAllStringSubmatch(output, -1)
-				ssids := make([]string, 0)
-				for _, submatch := range submatches {
-					ssids = append(ssids, submatch[1])
-				}
-				if len(ssids) < 2 {
-					fmt.Printf("error: no ssid")
-					return
-				}
 				for _, ssid := range ssids {
 					fmt.Println(ssid)
 					fmt.Fprintf(n, "%s", ssid)
 					time.Sleep(time.Second)
 				}
+				return
 			}
 		})
 
