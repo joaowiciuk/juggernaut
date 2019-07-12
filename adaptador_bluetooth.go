@@ -86,7 +86,7 @@ func (a *adaptadorBluetooth) servicoRedes() *gatt.Service {
 				}
 				for _, ssid := range ssids {
 					log.Println(ssid)
-					log.Fprintf(n, "%s", ssid)
+					fmt.Fprintf(n, "%s", ssid)
 					time.Sleep(time.Second)
 				}
 			}
