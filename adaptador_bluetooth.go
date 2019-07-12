@@ -74,13 +74,13 @@ func (a *adaptadorBluetooth) servicoRedes() *gatt.Service {
 			for _, ssid := range ssids[1:len(ssids)] {
 				fmt.Println(ssid)
 			}
-			if len(output) == 0 {
+			if len(ssids) == 0 {
 				rsp.SetStatus(gatt.StatusUnexpectedError)
 				rsp.Write([]byte("error: no ssid"))
 				return
 			}
 			rsp.SetStatus(gatt.StatusSuccess)
-			fmt.Fprintf(rsp, "%s", output)
+			fmt.Fprintf(rsp, "%s", ssids[0])
 		})
 
 	return s
