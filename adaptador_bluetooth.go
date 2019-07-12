@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"fmt"
 	"log"
 	"os"
 	"os/exec"
@@ -60,7 +59,14 @@ func (a *adaptadorBluetooth) servicoRedes() *gatt.Service {
 			buf := new(bytes.Buffer)
 			buf.ReadFrom(stdout)
 			SSIDs := buf.String()
-			fmt.Println(SSIDs)
+
+			if len(SSIDs) == 0 {
+				rsp.SetStatus(gatt.StatusUnexpectedError)
+				rsp.Write([]byte("error: no ssid"))
+				return
+			}
+
+			rsp.SetStatus(gatt.StatusSuccess)
 			rsp.Write([]byte(SSIDs))
 		})
 
