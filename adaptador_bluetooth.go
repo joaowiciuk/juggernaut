@@ -65,20 +65,22 @@ func (a *adaptadorBluetooth) servicoRedes() *gatt.Service {
 			}
 			buf := new(bytes.Buffer)
 			buf.ReadFrom(stdout)
-			SSIDs := buf.String()
+			output := buf.String()
 			if err := cmd.Wait(); err != nil {
 				log.Fatal(err)
 			}
-			re := regexp.MustCompile(`\r?\n`)
-			SSIDs = re.ReplaceAllString(SSIDs, " ")
-			fmt.Printf("%s\n", SSIDs)
-			if len(SSIDs) == 0 {
+			re := regexp.MustCompile(`SSID:\ (.*)`)
+			ssids := re.FindStringSubmatch(output)
+			for _, ssid := range ssids {
+				fmt.Println(ssid)
+			}
+			if len(output) == 0 {
 				rsp.SetStatus(gatt.StatusUnexpectedError)
 				rsp.Write([]byte("error: no ssid"))
 				return
 			}
 			rsp.SetStatus(gatt.StatusSuccess)
-			fmt.Fprintf(rsp, "%s", SSIDs)
+			fmt.Fprintf(rsp, "%s", output)
 		})
 
 	return s
