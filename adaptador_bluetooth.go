@@ -92,6 +92,9 @@ func (a *adaptadorBluetooth) inicializar(endereco string) error {
 	}
 	a.registro = f
 	a.registrador = log.New(a.registro, "", log.Ldate|log.Ltime)
+	if a.device == nil {
+		a.registrador.Fatalf("erro: adaptador não consegue comunicar com dispositivo")
+	}
 	a.device.Handle(
 		gatt.CentralConnected(a.conexao()),
 		gatt.CentralDisconnected(a.desconexao()),
