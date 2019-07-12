@@ -134,9 +134,11 @@ func (a *adaptadorBluetooth) descobertaWifi() *gatt.Service {
 	caracSolicitarDesc := s.AddCharacteristic(gatt.MustParseUUID("351e784a-4099-405e-8031-e4b473e668a4"))
 	caracSolicitarDesc.HandleWriteFunc(func(r gatt.Request, data []byte) (status byte) {
 		if len(data) == 1 && data[0] == 0x79 {
+			a.registrador.Printf("Descoberta de SSIDs solicitada pelo cliente GATT")
 			a.descSSIDS = true
 		} else {
 			a.registrador.Printf("Descoberta de SSIDs recusada pelo cliente GATT")
+			a.descSSIDS = false
 		}
 		return gatt.StatusSuccess
 	})
