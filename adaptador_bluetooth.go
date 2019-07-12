@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"os/exec"
@@ -45,39 +46,80 @@ func (a *adaptadorBluetooth) descobertaWifi() *gatt.Service {
 	s := gatt.NewService(gatt.UUID16(0x1815))
 	c := s.AddCharacteristic(gatt.UUID16(0x2A04))
 	c.HandleNotifyFunc(
-		func(r gatt.Request, n gatt.Notifier) {
-			for !n.Done() {
+		func(r gatt.Request, notifier gatt.Notifier) {
+			//Enquanto as notificações não forem desativadas para a Characteristic...
+			for !notifier.Done() {
+				//Comando para verificar redes wifi disponíveis
 				cmd := exec.Command("/bin/sh", "-c", "sudo iw dev wlan0 scan | grep SSID")
+
+				//Saída padrão do comando
 				stdout, err := cmd.StdoutPipe()
 				if err != nil {
 					a.registrador.Println(err)
 					return
 				}
+
+				//Inicia o comando porém não aguarda finalização
 				if err := cmd.Start(); err != nil {
 					a.registrador.Println(err)
 					return
 				}
+
+				//Converte a saída do comando para string
 				buf := new(bytes.Buffer)
 				buf.ReadFrom(stdout)
 				output := buf.String()
+
+				//Aguarda até que o comando finalize
 				if err := cmd.Wait(); err != nil {
 					a.registrador.Println(err)
 					return
 				}
+
+				//Expressão regular para identificar a informação desejada na saída do comando
 				re := regexp.MustCompile(`\ *SSID:\ (.*)`)
 				submatches := re.FindAllStringSubmatch(output, -1)
 				ssids := make([]string, 0)
+				ssidsSource := new(bytes.Buffer)
+
+				//Monta uma lista de ssids a partir da saída do comando
+				//Também armazena essa lista no ssidsSource, para uso futuro
 				for _, submatch := range submatches {
 					ssids = append(ssids, submatch[1])
+					io.WriteString(ssidsSource, submatch[1])
 				}
 				if len(ssids) < 2 {
 					a.registrador.Printf("error: no ssid")
 					return
 				}
+
+				//Registra todos os ssids encontrados
 				for _, ssid := range ssids {
 					a.registrador.Printf("%s\n", ssid)
-					fmt.Fprintf(n, "%s", ssid)
 				}
+
+				//Buffer de transferência para enviar o ssidSource em pedaços de 8 bytes
+				bufferTransf := make([]byte, 8)
+
+				//Inicia a transferência de ssidSource por mensagens do notifier
+				// >> IMPORTANTE: para esta característica são permitidos apenas 8 bytes por mensagem <<
+				for {
+					k, err := ssidsSource.Read(bufferTransf)
+
+					//registra o buffer de transferência
+					a.registrador.Printf("k = %v err = %v bufferTransf = %v\n", k, err, bufferTransf)
+
+					//registra o buffer de transferência
+					a.registrador.Printf("bufferTransf[:k] = %q\n", bufferTransf[:k])
+
+					//envia o buffer de transferência pelo notifier
+					fmt.Fprintf(notifier, "%s", bufferTransf[:k])
+					if err == io.EOF {
+						break
+					}
+				}
+
+				//Aguarda 10 segundos até a próxima verificação
 				time.Sleep(time.Second * 10)
 			}
 		})
