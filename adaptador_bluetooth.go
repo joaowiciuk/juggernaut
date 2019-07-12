@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"strings"
 
 	"github.com/paypal/gatt"
 	"github.com/paypal/gatt/examples/option"
@@ -68,14 +69,14 @@ func (a *adaptadorBluetooth) servicoRedes() *gatt.Service {
 			if err := cmd.Wait(); err != nil {
 				log.Fatal(err)
 			}
-			fmt.Printf("%s\n", SSIDs)
+			fmt.Printf("%s", strings.ReplaceAll(SSIDs, "\n", ""))
 			if len(SSIDs) == 0 {
 				rsp.SetStatus(gatt.StatusUnexpectedError)
 				rsp.Write([]byte("error: no ssid"))
 				return
 			}
 			rsp.SetStatus(gatt.StatusSuccess)
-			fmt.Fprintf(rsp, "%s\n", SSIDs)
+			fmt.Fprintf(rsp, "%s", strings.ReplaceAll(SSIDs, "\n", ""))
 		})
 
 	return s
