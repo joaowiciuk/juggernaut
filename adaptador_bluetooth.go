@@ -75,7 +75,7 @@ func (a *adaptadorBluetooth) servicoRedes() *gatt.Service {
 				return
 			}
 			re := regexp.MustCompile(`SSID:\ (.*)`)
-			ssids := re.FindStringSubmatch(output)
+			ssids := re.FindAllString(output, -1)
 			for _, ssid := range ssids[1:len(ssids)] {
 				fmt.Println(ssid)
 			}
@@ -108,7 +108,7 @@ func (a *adaptadorBluetooth) servicoRedes() *gatt.Service {
 				return
 			}
 			re := regexp.MustCompile(`SSID:\ (.*)`)
-			ssids := re.FindStringSubmatch(output)
+			ssids := re.FindAllString(output, -1)
 			for _, ssid := range ssids[1:len(ssids)] {
 				fmt.Println(ssid)
 			}
