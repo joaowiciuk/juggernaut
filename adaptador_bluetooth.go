@@ -69,12 +69,12 @@ func (a *adaptadorBluetooth) servicoRedes() *gatt.Service {
 					return
 				}
 				buf := new(bytes.Buffer)
+				buf.ReadFrom(stdout)
+				output := buf.String()
 				if err := cmd.Wait(); err != nil {
 					log.Println(err)
 					return
 				}
-				buf.ReadFrom(stdout)
-				output := buf.String()
 				re := regexp.MustCompile(`\ *SSID:\ (.*)`)
 				submatches := re.FindAllStringSubmatch(output, -1)
 				ssids := make([]string, 0)
