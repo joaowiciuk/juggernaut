@@ -53,7 +53,7 @@ func (a *adaptadorBluetooth) servicoRedes() *gatt.Service {
 	s := gatt.NewService(gatt.MustParseUUID("ac044f25-921b-4a9a-acaa-64c9fb77982a"))
 	s.AddCharacteristic(gatt.MustParseUUID("4c3121dd-915b-4d54-a3e5-d8deb33114c3")).HandleReadFunc(
 		func(rsp gatt.ResponseWriter, req *gatt.ReadRequest) {
-			cmd := exec.Command("sudo iw dev wlan0 scan | grep SSID")
+			cmd := exec.Command("/bin/sh", "-c", "sudo iw dev wlan0 scan | grep SSID")
 			stdout, _ := cmd.StdoutPipe()
 			cmd.Run()
 			buf := new(bytes.Buffer)
