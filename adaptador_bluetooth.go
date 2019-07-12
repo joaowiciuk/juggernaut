@@ -8,7 +8,6 @@ import (
 
 	"github.com/paypal/gatt"
 	"github.com/paypal/gatt/examples/option"
-	"github.com/paypal/gatt/examples/service"
 )
 
 type adaptadorBluetooth struct {
@@ -66,12 +65,7 @@ func (a *adaptadorBluetooth) servicoRedes() *gatt.Service {
 			rsp.Write([]byte("ERRO"))
 		})
 
-	// FIXME: this cause connection interrupted on Mac.
-	// Characteristic User Description
 	c.AddDescriptor(gatt.UUID16(0x2901)).SetValue([]byte("Redes wifi disponíveis"))
-
-	// Characteristic Presentation Format
-	//c.AddDescriptor(gatt.UUID16(0x2904)).SetValue([]byte{4, 1, 39, 173, 1, 0, 0})
 
 	return s
 }
@@ -91,16 +85,14 @@ func (a *adaptadorBluetooth) inicializar(endereco string) error {
 		a.registrador.Printf("Estado: %s\n", s)
 		switch s {
 		case gatt.StatePoweredOn:
-			d.AddService(service.NewGapService("Solutech Home Connect 1"))
-			d.AddService(service.NewGattService())
 
-			s1 := a.servicoPrincipal()
-			d.AddService(s1)
+			/* s1 := a.servicoPrincipal()
+			d.AddService(s1) */
 
 			s2 := a.servicoRedes()
 			d.AddService(s2)
 
-			d.AdvertiseNameAndServices("Solutech Home Connect 1", []gatt.UUID{s1.UUID(), s2.UUID()})
+			d.AdvertiseNameAndServices("Solutech Home Connect 1", []gatt.UUID{ /* s1.UUID(), */ s2.UUID()})
 			d.AdvertiseIBeacon(gatt.MustParseUUID("AA6062F098CA42118EC4193EB73CCEB6"), 1, 2, -59)
 		default:
 		}
