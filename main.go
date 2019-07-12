@@ -49,5 +49,5 @@ func main() {
 }
 
 func olaHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Olá, mundoadsasd!\n")
+	fmt.Fprintf(w, "Hello world!\n")
 }
