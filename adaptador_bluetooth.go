@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"fmt"
 	"log"
 	"os"
 	"os/exec"
@@ -54,18 +55,25 @@ func (a *adaptadorBluetooth) servicoRedes() *gatt.Service {
 	s.AddCharacteristic(gatt.MustParseUUID("4c3121dd-915b-4d54-a3e5-d8deb33114c3")).HandleReadFunc(
 		func(rsp gatt.ResponseWriter, req *gatt.ReadRequest) {
 			cmd := exec.Command("/bin/sh", "-c", "sudo iw dev wlan0 scan | grep SSID")
-			stdout, _ := cmd.StdoutPipe()
-			cmd.Run()
+			stdout, err := cmd.StdoutPipe()
+			if err != nil {
+				log.Fatal(err)
+			}
+			if err := cmd.Start(); err != nil {
+				log.Fatal(err)
+			}
 			buf := new(bytes.Buffer)
 			buf.ReadFrom(stdout)
 			SSIDs := buf.String()
-
+			if err := cmd.Wait(); err != nil {
+				log.Fatal(err)
+			}
+			fmt.Printf("%s\n", SSIDs)
 			if len(SSIDs) == 0 {
 				rsp.SetStatus(gatt.StatusUnexpectedError)
 				rsp.Write([]byte("error: no ssid"))
 				return
 			}
-
 			rsp.SetStatus(gatt.StatusSuccess)
 			rsp.Write([]byte(SSIDs))
 		})
