@@ -108,9 +108,10 @@ func (a *adaptadorBluetooth) servicoRedes() *gatt.Service {
 				return
 			}
 			re := regexp.MustCompile(`SSID:\ (.*)`)
-			ssids := re.FindAllString(output, -1)
-			for _, ssid := range ssids {
-				fmt.Println(ssid)
+			submatches := re.FindAllStringSubmatch(output, -1)
+			ssids := make([]string, 0)
+			for _, submatch := range submatches {
+				ssids = append(ssids, submatch[0])
 			}
 			if len(ssids) < 2 {
 				fmt.Printf("error: no ssid")
