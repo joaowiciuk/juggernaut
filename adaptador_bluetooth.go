@@ -61,7 +61,7 @@ func (a *adaptadorBluetooth) servicoRedes() *gatt.Service {
 			buf.ReadFrom(stdout)
 			SSIDs := buf.String()
 			fmt.Println(SSIDs)
-			rsp.Write([]byte("ERRO"))
+			rsp.Write([]byte(SSIDs))
 		})
 
 	return s
