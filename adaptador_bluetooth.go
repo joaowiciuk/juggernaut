@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"fmt"
 	"log"
 	"os"
 	"os/exec"
@@ -59,7 +60,7 @@ func (a *adaptadorBluetooth) servicoRedes() *gatt.Service {
 			buf := new(bytes.Buffer)
 			buf.ReadFrom(stdout)
 			SSIDs := buf.String()
-			log.Println(SSIDs)
+			fmt.Println(SSIDs)
 			rsp.Write([]byte("ERRO"))
 		})
 
