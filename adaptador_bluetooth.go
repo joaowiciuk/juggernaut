@@ -42,8 +42,8 @@ func (a *adaptadorBluetooth) desconexao() (f func(gatt.Central)) {
 }
 
 func (a *adaptadorBluetooth) descobertaWifi() *gatt.Service {
-	s := gatt.NewService(gatt.MustParseUUID("ac044f25-921b-4a9a-acaa-64c9fb77982a"))
-	c := s.AddCharacteristic(gatt.MustParseUUID("87a040df-b13f-46d3-be03-ade57dcf1f07"))
+	s := gatt.NewService(gatt.UUID16(0x1815))
+	c := s.AddCharacteristic(gatt.UUID16(0x2A04))
 	c.HandleNotifyFunc(
 		func(r gatt.Request, n gatt.Notifier) {
 			for !n.Done() {
