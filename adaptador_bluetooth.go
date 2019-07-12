@@ -41,38 +41,27 @@ func (a *adaptadorBluetooth) desconexao() (f func(gatt.Central)) {
 	}
 }
 
-func (a *adaptadorBluetooth) servicoPrincipal() *gatt.Service {
-	s := gatt.NewService(gatt.MustParseUUID("19fc95c0-c111-11e3-9904-0002a5d5c51b"))
-	s.AddCharacteristic(gatt.MustParseUUID("45fac9e0-c111-11e3-9246-0002a5d5c51b")).HandleWriteFunc(
-		func(r gatt.Request, data []byte) (status byte) {
-			a.processar(data)
-			return gatt.StatusSuccess
-		})
-	return s
-}
-
-func (a *adaptadorBluetooth) servicoRedes() *gatt.Service {
-
+func (a *adaptadorBluetooth) descobertaWifi() *gatt.Service {
 	s := gatt.NewService(gatt.MustParseUUID("ac044f25-921b-4a9a-acaa-64c9fb77982a"))
-
-	s.AddCharacteristic(gatt.MustParseUUID("87a040df-b13f-46d3-be03-ade57dcf1f07")).HandleNotifyFunc(
+	c := s.AddCharacteristic(gatt.MustParseUUID("87a040df-b13f-46d3-be03-ade57dcf1f07"))
+	c.HandleNotifyFunc(
 		func(r gatt.Request, n gatt.Notifier) {
 			for !n.Done() {
 				cmd := exec.Command("/bin/sh", "-c", "sudo iw dev wlan0 scan | grep SSID")
 				stdout, err := cmd.StdoutPipe()
 				if err != nil {
-					log.Println(err)
+					a.registrador.Println(err)
 					return
 				}
 				if err := cmd.Start(); err != nil {
-					log.Println(err)
+					a.registrador.Println(err)
 					return
 				}
 				buf := new(bytes.Buffer)
 				buf.ReadFrom(stdout)
 				output := buf.String()
 				if err := cmd.Wait(); err != nil {
-					log.Println(err)
+					a.registrador.Println(err)
 					return
 				}
 				re := regexp.MustCompile(`\ *SSID:\ (.*)`)
@@ -82,11 +71,11 @@ func (a *adaptadorBluetooth) servicoRedes() *gatt.Service {
 					ssids = append(ssids, submatch[1])
 				}
 				if len(ssids) < 2 {
-					log.Printf("error: no ssid")
+					a.registrador.Printf("error: no ssid")
 					return
 				}
 				for _, ssid := range ssids {
-					log.Println(ssid)
+					a.registrador.Printf("%s\n", ssid)
 					fmt.Fprintf(n, "%s", ssid)
 					time.Sleep(time.Second)
 				}
@@ -111,15 +100,9 @@ func (a *adaptadorBluetooth) inicializar(endereco string) error {
 		a.registrador.Printf("Estado: %s\n", s)
 		switch s {
 		case gatt.StatePoweredOn:
-
-			/* s1 := a.servicoPrincipal()
-			d.AddService(s1) */
-
-			s2 := a.servicoRedes()
-			d.AddService(s2)
-
-			d.AdvertiseNameAndServices("Solutech Home Connect 1", []gatt.UUID{ /* s1.UUID(), */ s2.UUID()})
-			d.AdvertiseIBeacon(gatt.MustParseUUID("AA6062F098CA42118EC4193EB73CCEB6"), 1, 2, -59)
+			descWifi := a.descobertaWifi()
+			d.AddService(descWifi)
+			d.AdvertiseNameAndServices("Solutech Home Connect", []gatt.UUID{descWifi.UUID()})
 		default:
 		}
 	}
@@ -133,8 +116,8 @@ func (a *adaptadorBluetooth) finalizar() {
 	a.registro.Close()
 }
 
+//TODO: especificar e implementar protocolo de comunicação por bluetooth
 func (a *adaptadorBluetooth) processar(dados []byte) (r *requisicao) {
-	//TODO: especificar e implementar protocolo de comunicação por bluetooth
 	s := string(dados)
 	a.registrador.Printf("%d bytes recebidos\n", len(dados))
 	a.registrador.Printf("Conteúdo: %s\n", s)
