@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"fmt"
 	"log"
 	"os"
 	"os/exec"
@@ -61,16 +60,16 @@ func (a *adaptadorBluetooth) servicoRedes() *gatt.Service {
 				cmd := exec.Command("/bin/sh", "-c", "sudo iw dev wlan0 scan | grep SSID")
 				stdout, err := cmd.StdoutPipe()
 				if err != nil {
-					fmt.Println(err)
+					log.Println(err)
 					return
 				}
 				if err := cmd.Start(); err != nil {
-					fmt.Println(err)
+					log.Println(err)
 					return
 				}
 				buf := new(bytes.Buffer)
 				if err := cmd.Wait(); err != nil {
-					fmt.Println(err)
+					log.Println(err)
 					return
 				}
 				buf.ReadFrom(stdout)
@@ -82,12 +81,12 @@ func (a *adaptadorBluetooth) servicoRedes() *gatt.Service {
 					ssids = append(ssids, submatch[1])
 				}
 				if len(ssids) < 2 {
-					fmt.Printf("error: no ssid")
+					log.Printf("error: no ssid")
 					return
 				}
 				for _, ssid := range ssids {
-					fmt.Println(ssid)
-					fmt.Fprintf(n, "%s", ssid)
+					log.Println(ssid)
+					log.Fprintf(n, "%s", ssid)
 					time.Sleep(time.Second)
 				}
 			}
