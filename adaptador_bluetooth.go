@@ -7,7 +7,6 @@ import (
 	"os"
 	"os/exec"
 	"regexp"
-	"strings"
 	"time"
 
 	"github.com/paypal/gatt"
@@ -55,84 +54,43 @@ func (a *adaptadorBluetooth) servicoPrincipal() *gatt.Service {
 func (a *adaptadorBluetooth) servicoRedes() *gatt.Service {
 
 	s := gatt.NewService(gatt.MustParseUUID("ac044f25-921b-4a9a-acaa-64c9fb77982a"))
-	s.AddCharacteristic(gatt.MustParseUUID("4c3121dd-915b-4d54-a3e5-d8deb33114c3")).HandleReadFunc(
-		func(rsp gatt.ResponseWriter, req *gatt.ReadRequest) {
-			cmd := exec.Command("/bin/sh", "-c", "sudo iw dev wlan0 scan | grep SSID")
-			stdout, err := cmd.StdoutPipe()
-			if err != nil {
-				fmt.Println(err)
-				return
-			}
-			if err := cmd.Start(); err != nil {
-				fmt.Println(err)
-				return
-			}
-			buf := new(bytes.Buffer)
-			buf.ReadFrom(stdout)
-			output := buf.String()
-			if err := cmd.Wait(); err != nil {
-				fmt.Println(err)
-				return
-			}
-			re := regexp.MustCompile(`SSID:\ (.*)`)
-			ssids := re.FindAllString(output, -1)
-			for _, ssid := range ssids {
-				fmt.Println(ssid)
-			}
-			if len(ssids) < 2 {
-				rsp.SetStatus(gatt.StatusUnexpectedError)
-				rsp.Write([]byte("error: no ssid"))
-				return
-			}
-			rsp.SetStatus(gatt.StatusSuccess)
-			fmt.Fprintf(rsp, "%s", strings.Join(ssids, ","))
-		})
 
 	s.AddCharacteristic(gatt.MustParseUUID("87a040df-b13f-46d3-be03-ade57dcf1f07")).HandleNotifyFunc(
 		func(r gatt.Request, n gatt.Notifier) {
-			cmd := exec.Command("/bin/sh", "-c", "sudo iw dev wlan0 scan | grep SSID")
-			stdout, err := cmd.StdoutPipe()
-			if err != nil {
-				fmt.Println(err)
-				return
-			}
-			if err := cmd.Start(); err != nil {
-				fmt.Println(err)
-				return
-			}
-			buf := new(bytes.Buffer)
-			buf.ReadFrom(stdout)
-			output := buf.String()
-			if err := cmd.Wait(); err != nil {
-				fmt.Println(err)
-				return
-			}
-			re := regexp.MustCompile(`SSID:\ (.*)`)
-			submatches := re.FindAllStringSubmatch(output, -1)
-			ssids := make([]string, 0)
-			for _, submatch := range submatches {
-				ssids = append(ssids, submatch[0])
-			}
-			if len(ssids) < 2 {
-				fmt.Printf("error: no ssid")
-				return
-			}
+
 			for !n.Done() {
+				cmd := exec.Command("/bin/sh", "-c", "sudo iw dev wlan0 scan | grep SSID")
+				stdout, err := cmd.StdoutPipe()
+				if err != nil {
+					fmt.Println(err)
+					return
+				}
+				if err := cmd.Start(); err != nil {
+					fmt.Println(err)
+					return
+				}
+				buf := new(bytes.Buffer)
+				buf.ReadFrom(stdout)
+				output := buf.String()
+				if err := cmd.Wait(); err != nil {
+					fmt.Println(err)
+					return
+				}
+				re := regexp.MustCompile(`\ *SSID:\ (.*)`)
+				submatches := re.FindAllStringSubmatch(output, -1)
+				ssids := make([]string, 0)
+				for _, submatch := range submatches {
+					ssids = append(ssids, submatch[1])
+				}
+				if len(ssids) < 2 {
+					fmt.Printf("error: no ssid")
+					return
+				}
 				for _, ssid := range ssids {
 					fmt.Println(ssid)
 					fmt.Fprintf(n, "%s", ssid)
 					time.Sleep(time.Second)
 				}
-			}
-		})
-
-	s.AddCharacteristic(gatt.MustParseUUID("1c927b50-c116-11e3-8a33-0800200c9a66")).HandleNotifyFunc(
-		func(r gatt.Request, n gatt.Notifier) {
-			cnt := 0
-			for !n.Done() {
-				fmt.Fprintf(n, "Count: %d", cnt)
-				cnt++
-				time.Sleep(time.Second)
 			}
 		})
 
