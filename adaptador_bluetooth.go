@@ -48,6 +48,7 @@ func (a *adaptadorBluetooth) desconexao() (f func(gatt.Central)) {
 }
 
 func (a *adaptadorBluetooth) lerTemperatura() *gatt.Service {
+	solicitada := false
 	s := gatt.NewService(gatt.UUID16(0x1815))
 	caracEnvTemp := s.AddCharacteristic(gatt.MustParseUUID("aee5af4f-d1a8-4855-b770-b912519327d6"))
 	caracEnvTemp.HandleNotifyFunc(func(r gatt.Request, notifier gatt.Notifier) {
@@ -55,9 +56,7 @@ func (a *adaptadorBluetooth) lerTemperatura() *gatt.Service {
 		//Enquanto as notificações não forem desativadas para a Characteristic...
 		for !notifier.Done() {
 
-			sucesso := false
-
-			for !sucesso {
+			for !solicitada {
 				a.registrador.Printf("Iniciando leitura de temperatura...")
 
 				cmd := exec.Command("/bin/sh", "-c", "vcgencmd measure_temp")
@@ -124,7 +123,7 @@ func (a *adaptadorBluetooth) lerTemperatura() *gatt.Service {
 					k, err := reader.Read(transf)
 					if err == io.EOF {
 						a.registrador.Printf("Leitura de temperatura encerrada com sucesso.")
-						sucesso = true
+						solicitada = false
 						break
 					}
 
@@ -137,8 +136,20 @@ func (a *adaptadorBluetooth) lerTemperatura() *gatt.Service {
 			}
 
 			//Intervalo para não estressar o dispositivo
-			time.Sleep(time.Second * 5)
+			time.Sleep(time.Second * 1)
 		}
+	})
+
+	caracSolTemp := s.AddCharacteristic(gatt.MustParseUUID("51aafba2-2d8b-48de-84a1-1d5746af5447"))
+	caracSolTemp.HandleWriteFunc(func(r gatt.Request, data []byte) (status byte) {
+		if len(data) == 1 && data[0] == 0x79 {
+			a.registrador.Printf("Leitura de temperatura solicitada pelo cliente GATT")
+			solicitada = true
+		} else {
+			a.registrador.Printf("Leitura de temperatura solicitada pelo cliente GATT")
+			solicitada = false
+		}
+		return gatt.StatusSuccess
 	})
 
 	return s
