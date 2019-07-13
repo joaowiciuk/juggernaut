@@ -2,6 +2,8 @@ package main
 
 import (
 	"bytes"
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -83,45 +85,56 @@ func (a *adaptadorBluetooth) descobertaWifi() *gatt.Service {
 					break
 				}
 
-				//Expressão regular para identificar a informação desejada na saída do comando
+				//Filtra a saída do comando
 				re := regexp.MustCompile(`\ *SSID:\ (.*)`)
 				submatches := re.FindAllStringSubmatch(output, -1)
-				ssids := make([]string, 0)
-				ssidsSource := new(bytes.Buffer)
-
-				//Monta uma lista de ssids a partir da saída do comando
-				//Também armazena essa lista no ssidsSource, para uso futuro
+				type SSID struct {
+					Lista []string `json:"ssids"`
+				}
+				ssid := SSID{
+					Lista: make([]string, 0),
+				}
 				for _, submatch := range submatches {
-					ssids = append(ssids, submatch[1])
-					io.WriteString(ssidsSource, submatch[1])
+					ssid.Lista = append(ssid.Lista, submatch[1])
 				}
 
 				//Nenhum SSID encontrado
-				if len(ssids) == 0 {
+				if len(ssid.Lista) == 0 {
 					a.registrador.Printf("Nenhum SSID encontrado.\n")
-					a.registrador.Printf("Descoberta de SSIDs encerrada com sucesso.\n")
+					a.registrador.Printf("Descoberta de SSIDs falhou.\n")
 					a.descSSIDS = false
 					return
 				}
 
+				//Converte os SSIDs para uma string JSON codificada em base 64
+				src, err := json.Marshal(ssid)
+				if err != nil {
+					a.registrador.Printf("Falha ao codificar SSIDs em base 64.\n")
+					a.descSSIDS = false
+					return
+				}
+				var dst []byte
+				base64.StdEncoding.Encode(dst, src)
+				reader := bytes.NewReader(dst)
+
 				//Registra todos os ssids encontrados
-				for _, ssid := range ssids {
-					a.registrador.Printf("%s\n", ssid)
+				for _, s := range ssid.Lista {
+					a.registrador.Printf("%s\n", s)
 				}
 
-				//Buffer de transferência para enviar o ssidSource em pedaços de 8 bytes
-				bufferTransf := make([]byte, 8)
+				//Buffer de transferência para enviar em pedaços
+				transf := make([]byte, 8)
 
 				//Inicia a transferência de ssidSource por mensagens do notifier
 				// >> IMPORTANTE: para esta característica são permitidos apenas 8 bytes por mensagem <<
 				for {
-					k, err := ssidsSource.Read(bufferTransf)
+					k, err := reader.Read(transf)
 
 					//registra o buffer de transferência
-					a.registrador.Printf("bufferTransf[:%d] = %q\n", k, bufferTransf[:k])
+					a.registrador.Printf("transf[:%d] = %q\n", k, transf[:k])
 
 					//envia o buffer de transferência pelo notifier
-					fmt.Fprintf(notifier, "%s", bufferTransf[:k])
+					fmt.Fprintf(notifier, "%s", transf[:k])
 					if err == io.EOF {
 						a.registrador.Printf("Descoberta de SSIDs encerrada com sucesso.")
 						a.descSSIDS = false
