@@ -47,6 +47,195 @@ func (a *adaptadorBluetooth) desconexao() (f func(gatt.Central)) {
 	}
 }
 
+func (a *adaptadorBluetooth) servicoUnico() *gatt.Service {
+	s := gatt.NewService(gatt.UUID16(0x1815))
+
+	requisicao := false
+
+	lerTemp := s.AddCharacteristic(gatt.MustParseUUID("aee5af4f-d1a8-4855-b770-b912519327d6"))
+	lerTemp.HandleReadFunc(func(rsp gatt.ResponseWriter, req *gatt.ReadRequest) {
+		for requisicao {
+			a.registrador.Printf("Iniciando leitura de temperatura...")
+			cmd := exec.Command("/bin/sh", "-c", "vcgencmd measure_temp")
+			//Saída padrão do comando
+			stdout, err := cmd.StdoutPipe()
+			if err != nil {
+				a.registrador.Println(err)
+				break
+			}
+			//Inicia o comando porém não aguarda finalização
+			if err := cmd.Start(); err != nil {
+				a.registrador.Println(err)
+				break
+			}
+			//Converte a saída do comando para string
+			buf := new(bytes.Buffer)
+			buf.ReadFrom(stdout)
+			output := buf.String()
+			//Aguarda até que o comando finalize
+			if err := cmd.Wait(); err != nil {
+				a.registrador.Println(err)
+				break
+			}
+			//Filtra a saída do comando
+			re := regexp.MustCompile(`temp=(.*)'C`)
+			submatches := re.FindAllStringSubmatch(output, -1)
+			temp, err := strconv.ParseFloat(submatches[0][1], 64)
+			if err != nil {
+				a.registrador.Println(err)
+				break
+			}
+			a.registrador.Printf("Temperatura lida %.2f\n", temp)
+			fmt.Fprintf(rsp, "%f", temp)
+			requisicao = false
+		}
+		//Intervalo para não estressar o dispositivo
+		time.Sleep(time.Second * 1)
+	})
+
+	solicitarSSIDs := s.AddCharacteristic(gatt.MustParseUUID("351e784a-4099-405e-8031-e4b473e668a4"))
+	solicitarSSIDs.HandleWriteFunc(func(r gatt.Request, data []byte) (status byte) {
+		if len(data) == 1 && data[0] == 0x79 {
+			a.registrador.Printf("Descoberta de SSIDs solicitada pelo cliente GATT")
+			requisicao = true
+		} else {
+			a.registrador.Printf("Descoberta de SSIDs recusada pelo cliente GATT")
+			requisicao = false
+		}
+		return gatt.StatusSuccess
+	})
+
+	lerSSIDs := s.AddCharacteristic(gatt.UUID16(0x2A04))
+	lerSSIDs.HandleNotifyFunc(func(r gatt.Request, notifier gatt.Notifier) {
+		//Enquanto as notificações não forem desativadas para a Characteristic...
+		for !notifier.Done() {
+			//Repete tentativa de descoberta de SSIDs pelo servidor GATT
+			for requisicao {
+				a.registrador.Printf("Iniciando tentativa de descoberta de SSIDs pelo pelo servidor GATT...")
+
+				//Comando para verificar redes wifi disponíveis
+				cmd := exec.Command("/bin/sh", "-c", "sudo iw dev wlan0 scan | grep SSID")
+
+				//Saída padrão do comando
+				stdout, err := cmd.StdoutPipe()
+				if err != nil {
+					a.registrador.Println(err)
+					break
+				}
+
+				//Inicia o comando porém não aguarda finalização
+				if err := cmd.Start(); err != nil {
+					a.registrador.Println(err)
+					break
+				}
+
+				//Converte a saída do comando para string
+				buf := new(bytes.Buffer)
+				buf.ReadFrom(stdout)
+				output := buf.String()
+
+				//Aguarda até que o comando finalize
+				if err := cmd.Wait(); err != nil {
+					a.registrador.Println(err)
+					break
+				}
+
+				//Filtra a saída do comando
+				re := regexp.MustCompile(`\ *SSID:\ (.*)`)
+				submatches := re.FindAllStringSubmatch(output, -1)
+				type SSID struct {
+					Lista []string `json:"ssids"`
+				}
+				ssid := SSID{
+					Lista: make([]string, 0),
+				}
+				for _, submatch := range submatches {
+					ssid.Lista = append(ssid.Lista, submatch[1])
+				}
+
+				//Nenhum SSID encontrado
+				if len(ssid.Lista) == 0 {
+					a.registrador.Printf("Nenhum SSID encontrado.\n")
+					a.registrador.Printf("Descoberta de SSIDs falhou.\n")
+					requisicao = false
+					return
+				}
+
+				//Converte os SSIDs para uma string JSON codificada em base 64
+				src, err := json.Marshal(ssid)
+				if err != nil {
+					a.registrador.Printf("Falha ao codificar SSIDs em base 64.\n")
+					requisicao = false
+					return
+				}
+				size := ((4 * len(src) / 3) + 3) & ^3
+				dst := make([]byte, size)
+				base64.StdEncoding.Encode(dst, src)
+				reader := bytes.NewReader(dst)
+
+				//Registra todos os ssids encontrados
+				for _, s := range ssid.Lista {
+					a.registrador.Printf("%s\n", s)
+				}
+
+				//Buffer de transferência para enviar em pedaços
+				transf := make([]byte, 8)
+
+				//Inicia a transferência de ssidSource por mensagens do notifier
+				// >> IMPORTANTE: para esta característica são permitidos apenas 8 bytes por mensagem <<
+				for {
+					k, err := reader.Read(transf)
+					if err == io.EOF {
+						a.registrador.Printf("Descoberta de SSIDs encerrada com sucesso.")
+						requisicao = false
+						break
+					}
+
+					//registra o buffer de transferência
+					a.registrador.Printf("transf[:%d] = %q\n", k, transf[:k])
+
+					//envia o buffer de transferência pelo notifier
+					fmt.Fprintf(notifier, "%s", transf[:k])
+				}
+			}
+			//Intervalo para não estressar o dispositivo
+			time.Sleep(time.Second * 1)
+		}
+	})
+
+	lerAmbiente := s.AddCharacteristic(gatt.MustParseUUID("ff39ae7e-61b6-4f67-af74-324e7af948bd"))
+	lerAmbiente.HandleReadFunc(func(rsp gatt.ResponseWriter, req *gatt.ReadRequest) {
+		ambiente := a.banco.lerAmbiente()
+		rsp.SetStatus(gatt.StatusSuccess)
+		fmt.Fprintf(rsp, "%s", ambiente)
+	})
+
+	escreverAmbiente := s.AddCharacteristic(gatt.MustParseUUID("2f54b94a-a6fe-4d5f-a4ca-932a362eba10"))
+	escreverAmbiente.HandleWriteFunc(func(r gatt.Request, data []byte) (status byte) {
+		ambiente := string(data)
+		a.banco.salvarAmbiente(ambiente)
+		return gatt.StatusSuccess
+	})
+
+	lerIP := s.AddCharacteristic(gatt.MustParseUUID("02e9a221-8643-451e-ad92-deeec489c44b"))
+	lerIP.HandleReadFunc(func(rsp gatt.ResponseWriter, req *gatt.ReadRequest) {
+		ip := a.banco.lerIP()
+		rsp.SetStatus(gatt.StatusSuccess)
+		fmt.Fprintf(rsp, "%s", ip)
+		a.registrador.Printf("IP solicitado: %s\n", ip)
+	})
+
+	escreverIP := s.AddCharacteristic(gatt.MustParseUUID("92e6b940-1ed5-43fb-b942-6ac51ad5d72d"))
+	escreverIP.HandleWriteFunc(func(r gatt.Request, data []byte) (status byte) {
+		ip := string(data)
+		a.banco.salvarIP(ip)
+		a.registrador.Printf("IP escrito: %s\n", ip)
+		return gatt.StatusSuccess
+	})
+
+	return s
+}
+
 func (a *adaptadorBluetooth) servTemperatura() *gatt.Service {
 	solicitada := false
 	s := gatt.NewService(gatt.UUID16(0x1815))
@@ -331,7 +520,7 @@ func (a *adaptadorBluetooth) inicializar(endereco string, banco *banco) error {
 		a.registrador.Printf("Estado: %s\n", s)
 		switch s {
 		case gatt.StatePoweredOn:
-			sWifi := a.servWifi()
+			/* sWifi := a.servWifi()
 			d.AddService(sWifi)
 			sAmb := a.servAmbiente()
 			d.AddService(sAmb)
@@ -339,7 +528,10 @@ func (a *adaptadorBluetooth) inicializar(endereco string, banco *banco) error {
 			d.AddService(sTemp)
 			sIp := a.servIP()
 			d.AddService(sIp)
-			d.AdvertiseNameAndServices("Solutech Home Connect", []gatt.UUID{sWifi.UUID(), sAmb.UUID(), sTemp.UUID(), sIp.UUID()})
+			d.AdvertiseNameAndServices("Solutech Home Connect", []gatt.UUID{sWifi.UUID(), sAmb.UUID(), sTemp.UUID(), sIp.UUID()}) */
+			sUnico := a.servicoUnico()
+			d.AddService(sUnico)
+			d.AdvertiseNameAndServices("Solutech Home Connect", []gatt.UUID{sUnico.UUID()})
 		default:
 		}
 	}
