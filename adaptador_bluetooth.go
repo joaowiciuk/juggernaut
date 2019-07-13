@@ -122,16 +122,14 @@ func (a *adaptadorBluetooth) descobertaWifi() *gatt.Service {
 					//envia o buffer de transferência pelo notifier
 					fmt.Fprintf(notifier, "%s", bufferTransf[:k])
 					if err == io.EOF {
+						a.registrador.Printf("Descoberta de SSIDs encerrada com sucesso.")
+						a.descSSIDS = false
 						break
 					}
 				}
-
-				a.registrador.Printf("Descoberta de SSIDs encerrada com sucesso.")
-				a.descSSIDS = false
 			}
 
-			//Aguarda até a próxima tentativa
-			a.registrador.Printf("Aguardando até a próxima tentativa...\n")
+			//Intervalo para não estressar o dispositivo
 			time.Sleep(time.Second * 1)
 		}
 	})
