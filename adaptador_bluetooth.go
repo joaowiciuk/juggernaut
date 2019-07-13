@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/exec"
 	"regexp"
+	"strconv"
 	"time"
 
 	"github.com/paypal/gatt"
@@ -44,6 +45,103 @@ func (a *adaptadorBluetooth) desconexao() (f func(gatt.Central)) {
 	return func(c gatt.Central) {
 		a.registrador.Printf("%s desconectou-se.\n", c.ID())
 	}
+}
+
+func (a *adaptadorBluetooth) lerTemperatura() *gatt.Service {
+	s := gatt.NewService(gatt.UUID16(0x1815))
+	caracEnvTemp := s.AddCharacteristic(gatt.MustParseUUID("aee5af4f-d1a8-4855-b770-b912519327d6"))
+	caracEnvTemp.HandleNotifyFunc(func(r gatt.Request, notifier gatt.Notifier) {
+
+		//Enquanto as notificações não forem desativadas para a Characteristic...
+		for !notifier.Done() {
+
+			sucesso := false
+
+			for !sucesso {
+				a.registrador.Printf("Iniciando leitura de temperatura...")
+
+				cmd := exec.Command("/bin/sh", "-c", "vcgencmd measure_temp")
+
+				//Saída padrão do comando
+				stdout, err := cmd.StdoutPipe()
+				if err != nil {
+					a.registrador.Println(err)
+					break
+				}
+
+				//Inicia o comando porém não aguarda finalização
+				if err := cmd.Start(); err != nil {
+					a.registrador.Println(err)
+					break
+				}
+
+				//Converte a saída do comando para string
+				buf := new(bytes.Buffer)
+				buf.ReadFrom(stdout)
+				output := buf.String()
+
+				//Aguarda até que o comando finalize
+				if err := cmd.Wait(); err != nil {
+					a.registrador.Println(err)
+					break
+				}
+
+				//Filtra a saída do comando
+				re := regexp.MustCompile(`temp=(.*)'C`)
+				submatches := re.FindAllStringSubmatch(output, -1)
+				value, err := strconv.ParseFloat(submatches[0][1], 64)
+				if err != nil {
+					a.registrador.Println(err)
+					break
+				}
+				type Temp struct {
+					Value float64 `json:"temperatura"`
+				}
+				temp := Temp{
+					Value: value,
+				}
+
+				src, err := json.Marshal(temp)
+				if err != nil {
+					a.registrador.Printf("Falha ao codificar temperatura em base 64.\n")
+					a.descSSIDS = false
+					return
+				}
+				size := ((4 * len(src) / 3) + 3) & ^3
+				dst := make([]byte, size)
+				base64.StdEncoding.Encode(dst, src)
+				reader := bytes.NewReader(dst)
+
+				//Registra a temperatura
+				a.registrador.Printf("%.2f\n", temp.Value)
+
+				//Buffer de transferência para enviar em pedaços
+				transf := make([]byte, 8)
+
+				//Inicia a transferência de ssidSource por mensagens do notifier
+				// >> IMPORTANTE: para esta característica são permitidos apenas 8 bytes por mensagem <<
+				for {
+					k, err := reader.Read(transf)
+					if err == io.EOF {
+						a.registrador.Printf("Leitura de temperatura encerrada com sucesso.")
+						sucesso = true
+						break
+					}
+
+					//registra o buffer de transferência
+					a.registrador.Printf("transf[:%d] = %q\n", k, transf[:k])
+
+					//envia o buffer de transferência pelo notifier
+					fmt.Fprintf(notifier, "%s", transf[:k])
+				}
+			}
+
+			//Intervalo para não estressar o dispositivo
+			time.Sleep(time.Second * 5)
+		}
+	})
+
+	return s
 }
 
 func (a *adaptadorBluetooth) descobertaWifi() *gatt.Service {
@@ -205,7 +303,9 @@ func (a *adaptadorBluetooth) inicializar(endereco string, banco *banco) error {
 			d.AddService(descWifi)
 			configAmb := a.servicoConfigAmbiente()
 			d.AddService(configAmb)
-			d.AdvertiseNameAndServices("Solutech Home Connect", []gatt.UUID{descWifi.UUID(), configAmb.UUID()})
+			lerTemp := a.lerTemperatura()
+			d.AddService(lerTemp)
+			d.AdvertiseNameAndServices("Solutech Home Connect", []gatt.UUID{descWifi.UUID(), configAmb.UUID(), lerTemp.UUID()})
 		default:
 		}
 	}
