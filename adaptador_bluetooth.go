@@ -130,17 +130,17 @@ func (a *adaptadorBluetooth) descobertaWifi() *gatt.Service {
 				// >> IMPORTANTE: para esta característica são permitidos apenas 8 bytes por mensagem <<
 				for {
 					k, err := reader.Read(transf)
+					if err == io.EOF {
+						a.registrador.Printf("Descoberta de SSIDs encerrada com sucesso.")
+						a.descSSIDS = false
+						break
+					}
 
 					//registra o buffer de transferência
 					a.registrador.Printf("transf[:%d] = %q\n", k, transf[:k])
 
 					//envia o buffer de transferência pelo notifier
 					fmt.Fprintf(notifier, "%s", transf[:k])
-					if err == io.EOF || k == 0 {
-						a.registrador.Printf("Descoberta de SSIDs encerrada com sucesso.")
-						a.descSSIDS = false
-						break
-					}
 				}
 			}
 
