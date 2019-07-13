@@ -299,12 +299,14 @@ func (a *adaptadorBluetooth) servIP() *gatt.Service {
 		ip := a.banco.lerIP()
 		rsp.SetStatus(gatt.StatusSuccess)
 		fmt.Fprintf(rsp, "%s", ip)
+		a.registrador.Printf("IP solicitado: %s\n", ip)
 	})
 
 	caracDefinirIP := s.AddCharacteristic(gatt.MustParseUUID("92e6b940-1ed5-43fb-b942-6ac51ad5d72d"))
 	caracDefinirIP.HandleWriteFunc(func(r gatt.Request, data []byte) (status byte) {
 		ip := string(data)
 		a.banco.salvarIP(ip)
+		a.registrador.Printf("IP escrito: %s\n", ip)
 		return gatt.StatusSuccess
 	})
 
