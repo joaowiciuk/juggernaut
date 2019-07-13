@@ -62,7 +62,7 @@ func (b *banco) salvarAmbiente(ambiente string) error {
 }
 
 func (b *banco) lerAmbiente() (ambiente string) {
-	b.nucleo.Update(func(tx *bolt.Tx) error {
+	b.nucleo.View(func(tx *bolt.Tx) error {
 		balde := tx.Bucket([]byte("config"))
 		ambiente = string(balde.Get([]byte("ambiente")))
 		return nil
