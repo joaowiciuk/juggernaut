@@ -47,87 +47,92 @@ func (a *adaptadorBluetooth) descobertaWifi() *gatt.Service {
 	s := gatt.NewService(gatt.UUID16(0x1815))
 	caracSSIDs := s.AddCharacteristic(gatt.UUID16(0x2A04))
 	caracSSIDs.HandleNotifyFunc(func(r gatt.Request, notifier gatt.Notifier) {
+
 		//Enquanto as notificações não forem desativadas para a Characteristic...
 		for !notifier.Done() {
 
-			//Se a descoberta de SSIDs não tiver sido solicitada, abortar
-			if a.descSSIDS == false {
-				return
-			}
+			//Repete tentativa de descoberta de SSIDs pelo servidor GATT
+			for a.descSSIDS {
+				a.registrador.Printf("Iniciando tentativa de descoberta de SSIDs pelo pelo servidor GATT...")
 
-			a.registrador.Printf("Descoberta de SSIDs iniciada pelo servidor GATT")
+				//Comando para verificar redes wifi disponíveis
+				cmd := exec.Command("/bin/sh", "-c", "sudo iw dev wlan0 scan | grep SSID")
 
-			//Comando para verificar redes wifi disponíveis
-			cmd := exec.Command("/bin/sh", "-c", "sudo iw dev wlan0 scan | grep SSID")
-
-			//Saída padrão do comando
-			stdout, err := cmd.StdoutPipe()
-			if err != nil {
-				a.registrador.Println(err)
-				return
-			}
-
-			//Inicia o comando porém não aguarda finalização
-			if err := cmd.Start(); err != nil {
-				a.registrador.Println(err)
-				return
-			}
-
-			//Converte a saída do comando para string
-			buf := new(bytes.Buffer)
-			buf.ReadFrom(stdout)
-			output := buf.String()
-
-			//Aguarda até que o comando finalize
-			if err := cmd.Wait(); err != nil {
-				a.registrador.Println(err)
-				return
-			}
-
-			//Expressão regular para identificar a informação desejada na saída do comando
-			re := regexp.MustCompile(`\ *SSID:\ (.*)`)
-			submatches := re.FindAllStringSubmatch(output, -1)
-			ssids := make([]string, 0)
-			ssidsSource := new(bytes.Buffer)
-
-			//Monta uma lista de ssids a partir da saída do comando
-			//Também armazena essa lista no ssidsSource, para uso futuro
-			for _, submatch := range submatches {
-				ssids = append(ssids, submatch[1])
-				io.WriteString(ssidsSource, submatch[1])
-			}
-			if len(ssids) < 2 {
-				a.registrador.Printf("error: no ssid")
-				return
-			}
-
-			//Registra todos os ssids encontrados
-			for _, ssid := range ssids {
-				a.registrador.Printf("%s\n", ssid)
-			}
-
-			//Buffer de transferência para enviar o ssidSource em pedaços de 8 bytes
-			bufferTransf := make([]byte, 8)
-
-			//Inicia a transferência de ssidSource por mensagens do notifier
-			// >> IMPORTANTE: para esta característica são permitidos apenas 8 bytes por mensagem <<
-			for {
-				k, err := ssidsSource.Read(bufferTransf)
-
-				//registra o buffer de transferência
-				a.registrador.Printf("bufferTransf[:%d] = %q\n", k, bufferTransf[:k])
-
-				//envia o buffer de transferência pelo notifier
-				fmt.Fprintf(notifier, "%s", bufferTransf[:k])
-				if err == io.EOF {
+				//Saída padrão do comando
+				stdout, err := cmd.StdoutPipe()
+				if err != nil {
+					a.registrador.Println(err)
 					break
 				}
+
+				//Inicia o comando porém não aguarda finalização
+				if err := cmd.Start(); err != nil {
+					a.registrador.Println(err)
+					break
+				}
+
+				//Converte a saída do comando para string
+				buf := new(bytes.Buffer)
+				buf.ReadFrom(stdout)
+				output := buf.String()
+
+				//Aguarda até que o comando finalize
+				if err := cmd.Wait(); err != nil {
+					a.registrador.Println(err)
+					break
+				}
+
+				//Expressão regular para identificar a informação desejada na saída do comando
+				re := regexp.MustCompile(`\ *SSID:\ (.*)`)
+				submatches := re.FindAllStringSubmatch(output, -1)
+				ssids := make([]string, 0)
+				ssidsSource := new(bytes.Buffer)
+
+				//Monta uma lista de ssids a partir da saída do comando
+				//Também armazena essa lista no ssidsSource, para uso futuro
+				for _, submatch := range submatches {
+					ssids = append(ssids, submatch[1])
+					io.WriteString(ssidsSource, submatch[1])
+				}
+
+				//Nenhum SSID encontrado
+				if len(ssids) == 0 {
+					a.registrador.Printf("Nenhum SSID encontrado.\n")
+					a.registrador.Printf("Descoberta de SSIDs encerrada com sucesso.\n")
+					a.descSSIDS = false
+					return
+				}
+
+				//Registra todos os ssids encontrados
+				for _, ssid := range ssids {
+					a.registrador.Printf("%s\n", ssid)
+				}
+
+				//Buffer de transferência para enviar o ssidSource em pedaços de 8 bytes
+				bufferTransf := make([]byte, 8)
+
+				//Inicia a transferência de ssidSource por mensagens do notifier
+				// >> IMPORTANTE: para esta característica são permitidos apenas 8 bytes por mensagem <<
+				for {
+					k, err := ssidsSource.Read(bufferTransf)
+
+					//registra o buffer de transferência
+					a.registrador.Printf("bufferTransf[:%d] = %q\n", k, bufferTransf[:k])
+
+					//envia o buffer de transferência pelo notifier
+					fmt.Fprintf(notifier, "%s", bufferTransf[:k])
+					if err == io.EOF {
+						break
+					}
+				}
+
+				a.registrador.Printf("Descoberta de SSIDs encerrada com sucesso.")
+				a.descSSIDS = false
 			}
 
-			a.registrador.Printf("Descoberta de SSIDs finalizada pelo servidor GATT")
-			a.descSSIDS = false
-			//Aguarda 10 segundos até a próxima verificação, caso seja solicitada
-			time.Sleep(time.Second * 10)
+			//Aguarda até a próxima tentativa
+			a.registrador.Printf("Aguardando até a próxima tentativa...\n")
+			time.Sleep(time.Second * 1)
 		}
 	})
 
