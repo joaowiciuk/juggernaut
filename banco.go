@@ -32,6 +32,7 @@ func (b *banco) inicializar(enderReg string, caminNucleo string, modArqNucleo os
 		return err
 	}
 	b.nucleo = n
+	b.registrador.Printf("Inicializando banco...\n")
 	return nil
 }
 

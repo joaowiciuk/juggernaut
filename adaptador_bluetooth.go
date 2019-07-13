@@ -189,7 +189,9 @@ func (a *adaptadorBluetooth) inicializar(endereco string, banco *banco) error {
 		case gatt.StatePoweredOn:
 			descWifi := a.descobertaWifi()
 			d.AddService(descWifi)
-			d.AdvertiseNameAndServices("Solutech Home Connect", []gatt.UUID{descWifi.UUID()})
+			configAmb := a.servicoConfigAmbiente()
+			d.AddService(configAmb)
+			d.AdvertiseNameAndServices("Solutech Home Connect", []gatt.UUID{descWifi.UUID(), configAmb.UUID()})
 		default:
 		}
 	}
