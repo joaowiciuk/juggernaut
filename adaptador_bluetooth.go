@@ -19,6 +19,7 @@ type adaptadorBluetooth struct {
 	registrador *log.Logger
 	device      gatt.Device
 	descSSIDS   bool
+	banco       *banco
 }
 
 func newAdaptadorBluetooth() (a *adaptadorBluetooth) {
@@ -149,7 +150,26 @@ func (a *adaptadorBluetooth) descobertaWifi() *gatt.Service {
 	return s
 }
 
-func (a *adaptadorBluetooth) inicializar(endereco string) error {
+func (a *adaptadorBluetooth) servicoConfigAmbiente() *gatt.Service {
+	s := gatt.NewService(gatt.UUID16(0x1815))
+	caracObterAmbiente := s.AddCharacteristic(gatt.MustParseUUID("02e9a221-8643-451e-ad92-deeec489c44b"))
+	caracObterAmbiente.HandleReadFunc(func(rsp gatt.ResponseWriter, req *gatt.ReadRequest) {
+		ambiente := a.banco.lerAmbiente()
+		rsp.SetStatus(gatt.StatusSuccess)
+		fmt.Fprintf(rsp, "%s", ambiente)
+	})
+
+	caracDefinirAmbiente := s.AddCharacteristic(gatt.MustParseUUID("92e6b940-1ed5-43fb-b942-6ac51ad5d72d"))
+	caracDefinirAmbiente.HandleWriteFunc(func(r gatt.Request, data []byte) (status byte) {
+		ambiente := string(data)
+		a.banco.salvarAmbiente(ambiente)
+		return gatt.StatusSuccess
+	})
+
+	return s
+}
+
+func (a *adaptadorBluetooth) inicializar(endereco string, banco *banco) error {
 	f, err := os.OpenFile(endereco, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0666)
 	if err != nil {
 		return err
@@ -175,6 +195,7 @@ func (a *adaptadorBluetooth) inicializar(endereco string) error {
 	}
 	a.registrador.Printf("Inicializando adaptador bluetooth...\n")
 	a.device.Init(onStateChanged)
+	a.banco = banco
 	return nil
 }
 

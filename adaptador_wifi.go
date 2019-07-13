@@ -15,13 +15,14 @@ type adaptadorWifi struct {
 	registrador *log.Logger
 	roteador    *mux.Router
 	atualizador *websocket.Upgrader
+	banco       *banco
 }
 
 func newAdaptadorWifi() (aw *adaptadorWifi) {
 	return &adaptadorWifi{}
 }
 
-func (aw *adaptadorWifi) inicializar(endereco string) (err error) {
+func (aw *adaptadorWifi) inicializar(endereco string, banco *banco) (err error) {
 	f, err := os.OpenFile(endereco, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0666)
 	if err != nil {
 		return err
@@ -32,6 +33,7 @@ func (aw *adaptadorWifi) inicializar(endereco string) (err error) {
 	aw.roteador = mux.NewRouter()
 	aw.adicionarManipulador(aw.manipuladorPrincipal(), "/", "GET")
 	aw.atualizador = &websocket.Upgrader{}
+	aw.banco = banco
 	return nil
 }
 
