@@ -2,6 +2,12 @@
 
 
 [[projects]]
+  name = "github.com/boltdb/bolt"
+  packages = ["."]
+  revision = "2f1ce7a837dcb8da3ec595b1dac9d0632f0f99e8"
+  version = "v1.3.1"
+
+[[projects]]
   name = "github.com/gorilla/mux"
   packages = ["."]
   revision = "00bdffe0f3c77e27d2cf6f5c70232a2d3e4d9c15"
@@ -16,7 +22,7 @@
 [[projects]]
   branch = "master"
   name = "github.com/paypal/gatt"
-  packages = [".","examples/option","examples/service","linux","linux/cmd","linux/evt","linux/gioctl","linux/socket","linux/util","xpc"]
+  packages = [".","examples/option","linux","linux/cmd","linux/evt","linux/gioctl","linux/socket","linux/util","xpc"]
   revision = "4ae819d591cfc94c496c45deb55928469542beec"
 
 [[projects]]
@@ -25,9 +31,15 @@
   revision = "d43a3ce8186d47f497a6785f997400a1b2f1fdc7"
   version = "v4.4.0"
 
+[[projects]]
+  branch = "master"
+  name = "golang.org/x/sys"
+  packages = ["unix"]
+  revision = "fae7ac547cb717d141c433a2a173315e216b64c4"
+
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "fb0fe20965ef982b2714f0c280f26b69abc77f4c982c02086fb3a1aa6a165991"
+  inputs-digest = "ccc178456c61144ede32f16be3ed7b4dcaafcc41cda77f9d8c39ab32b5e35d2e"
   solver-name = "gps-cdcl"
   solver-version = 1
