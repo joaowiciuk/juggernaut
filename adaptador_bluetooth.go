@@ -47,7 +47,7 @@ func (a *adaptadorBluetooth) desconexao() (f func(gatt.Central)) {
 	}
 }
 
-func (a *adaptadorBluetooth) lerTemperatura() *gatt.Service {
+func (a *adaptadorBluetooth) servTemperatura() *gatt.Service {
 	solicitada := false
 	s := gatt.NewService(gatt.UUID16(0x1815))
 	caracEnvTemp := s.AddCharacteristic(gatt.MustParseUUID("aee5af4f-d1a8-4855-b770-b912519327d6"))
@@ -155,7 +155,7 @@ func (a *adaptadorBluetooth) lerTemperatura() *gatt.Service {
 	return s
 }
 
-func (a *adaptadorBluetooth) descobertaWifi() *gatt.Service {
+func (a *adaptadorBluetooth) servWifi() *gatt.Service {
 	s := gatt.NewService(gatt.UUID16(0x1815))
 	caracSSIDs := s.AddCharacteristic(gatt.UUID16(0x2A04))
 	caracSSIDs.HandleNotifyFunc(func(r gatt.Request, notifier gatt.Notifier) {
@@ -273,7 +273,7 @@ func (a *adaptadorBluetooth) descobertaWifi() *gatt.Service {
 	return s
 }
 
-func (a *adaptadorBluetooth) servicoConfigAmbiente() *gatt.Service {
+func (a *adaptadorBluetooth) servAmbiente() *gatt.Service {
 	s := gatt.NewService(gatt.UUID16(0x1815))
 	caracObterAmbiente := s.AddCharacteristic(gatt.MustParseUUID("02e9a221-8643-451e-ad92-deeec489c44b"))
 	caracObterAmbiente.HandleReadFunc(func(rsp gatt.ResponseWriter, req *gatt.ReadRequest) {
@@ -292,7 +292,7 @@ func (a *adaptadorBluetooth) servicoConfigAmbiente() *gatt.Service {
 	return s
 }
 
-func (a *adaptadorBluetooth) servicoConfigIP() *gatt.Service {
+func (a *adaptadorBluetooth) servIP() *gatt.Service {
 	s := gatt.NewService(gatt.UUID16(0x1815))
 	caracObterIP := s.AddCharacteristic(gatt.MustParseUUID("02e9a221-8643-451e-ad92-deeec489c44b"))
 	caracObterIP.HandleReadFunc(func(rsp gatt.ResponseWriter, req *gatt.ReadRequest) {
@@ -329,15 +329,15 @@ func (a *adaptadorBluetooth) inicializar(endereco string, banco *banco) error {
 		a.registrador.Printf("Estado: %s\n", s)
 		switch s {
 		case gatt.StatePoweredOn:
-			descWifi := a.descobertaWifi()
-			d.AddService(descWifi)
-			configAmb := a.servicoConfigAmbiente()
-			d.AddService(configAmb)
-			lerTemp := a.lerTemperatura()
-			d.AddService(lerTemp)
-			configIP := a.servicoConfigIP()
-			d.AddService(configIP)
-			d.AdvertiseNameAndServices("Solutech Home Connect", []gatt.UUID{descWifi.UUID(), configAmb.UUID(), lerTemp.UUID(), configIP.UUID()})
+			sWifi := a.servWifi()
+			d.AddService(sWifi)
+			sAmb := a.servAmbiente()
+			d.AddService(sAmb)
+			sTemp := a.servTemperatura()
+			d.AddService(sTemp)
+			sIp := a.servIP()
+			d.AddService(sIp)
+			d.AdvertiseNameAndServices("Solutech Home Connect", []gatt.UUID{sWifi.UUID(), sAmb.UUID(), sTemp.UUID(), sIp.UUID()})
 		default:
 		}
 	}
