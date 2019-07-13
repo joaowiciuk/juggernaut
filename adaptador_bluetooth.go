@@ -292,6 +292,25 @@ func (a *adaptadorBluetooth) servicoConfigAmbiente() *gatt.Service {
 	return s
 }
 
+func (a *adaptadorBluetooth) servicoConfigIP() *gatt.Service {
+	s := gatt.NewService(gatt.UUID16(0x1815))
+	caracObterIP := s.AddCharacteristic(gatt.MustParseUUID("02e9a221-8643-451e-ad92-deeec489c44b"))
+	caracObterIP.HandleReadFunc(func(rsp gatt.ResponseWriter, req *gatt.ReadRequest) {
+		ip := a.banco.lerIP()
+		rsp.SetStatus(gatt.StatusSuccess)
+		fmt.Fprintf(rsp, "%s", ip)
+	})
+
+	caracDefinirIP := s.AddCharacteristic(gatt.MustParseUUID("92e6b940-1ed5-43fb-b942-6ac51ad5d72d"))
+	caracDefinirIP.HandleWriteFunc(func(r gatt.Request, data []byte) (status byte) {
+		ip := string(data)
+		a.banco.salvarIP(ip)
+		return gatt.StatusSuccess
+	})
+
+	return s
+}
+
 func (a *adaptadorBluetooth) inicializar(endereco string, banco *banco) error {
 	f, err := os.OpenFile(endereco, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0666)
 	if err != nil {
@@ -316,7 +335,9 @@ func (a *adaptadorBluetooth) inicializar(endereco string, banco *banco) error {
 			d.AddService(configAmb)
 			lerTemp := a.lerTemperatura()
 			d.AddService(lerTemp)
-			d.AdvertiseNameAndServices("Solutech Home Connect", []gatt.UUID{descWifi.UUID(), configAmb.UUID(), lerTemp.UUID()})
+			configIP := a.servicoConfigIP()
+			d.AddService(configIP)
+			d.AdvertiseNameAndServices("Solutech Home Connect", []gatt.UUID{descWifi.UUID(), configAmb.UUID(), lerTemp.UUID(), configIP.UUID()})
 		default:
 		}
 	}

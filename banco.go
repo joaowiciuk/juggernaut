@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"regexp"
 
 	"github.com/boltdb/bolt"
 )
@@ -68,6 +69,36 @@ func (b *banco) lerAmbiente() (ambiente string) {
 			ambiente = ""
 		} else {
 			ambiente = string(balde.Get([]byte("ambiente")))
+		}
+		return nil
+	})
+	return
+}
+
+func (b *banco) salvarIP(ip string) error {
+	if ok, err := regexp.Match(`(?:[0-9]{1,3}\.){3}[0-9]{1,3}`, []byte(ip)); !ok || err != nil {
+		b.registrador.Printf("Erro: IP inválido fornecido: %s\n", ip)
+		return errors.New("IP inválido")
+	}
+	erroExterno := b.nucleo.Update(func(tx *bolt.Tx) error {
+		balde, erroInterno := tx.CreateBucketIfNotExists([]byte("config"))
+		if erroInterno != nil {
+			b.registrador.Printf("Erro: não foi possível criar balde\n")
+			return fmt.Errorf("criar balde: %s", erroInterno)
+		}
+		erroInterno = balde.Put([]byte("ip"), []byte(ip))
+		return erroInterno
+	})
+	return erroExterno
+}
+
+func (b *banco) lerIP() (ip string) {
+	b.nucleo.View(func(tx *bolt.Tx) error {
+		balde := tx.Bucket([]byte("config"))
+		if balde == nil {
+			ip = ""
+		} else {
+			ip = string(balde.Get([]byte("ip")))
 		}
 		return nil
 	})
