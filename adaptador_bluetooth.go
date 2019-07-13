@@ -529,6 +529,7 @@ func (a *adaptadorBluetooth) inicializar(endereco string, banco *banco) error {
 			sIp := a.servIP()
 			d.AddService(sIp)
 			d.AdvertiseNameAndServices("Solutech Home Connect", []gatt.UUID{sWifi.UUID(), sAmb.UUID(), sTemp.UUID(), sIp.UUID()}) */
+
 			sUnico := a.servicoUnico()
 			d.AddService(sUnico)
 			d.AdvertiseNameAndServices("Solutech Home Connect", []gatt.UUID{sUnico.UUID()})
