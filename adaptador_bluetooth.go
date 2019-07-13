@@ -56,7 +56,7 @@ func (a *adaptadorBluetooth) lerTemperatura() *gatt.Service {
 		//Enquanto as notificações não forem desativadas para a Characteristic...
 		for !notifier.Done() {
 
-			for !solicitada {
+			for solicitada {
 				a.registrador.Printf("Iniciando leitura de temperatura...")
 
 				cmd := exec.Command("/bin/sh", "-c", "vcgencmd measure_temp")
