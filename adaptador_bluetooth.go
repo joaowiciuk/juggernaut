@@ -113,7 +113,8 @@ func (a *adaptadorBluetooth) descobertaWifi() *gatt.Service {
 					a.descSSIDS = false
 					return
 				}
-				var dst []byte
+				size := ((4 * len(src) / 3) + 3) & ^3
+				dst := make([]byte, size)
 				base64.StdEncoding.Encode(dst, src)
 				reader := bytes.NewReader(dst)
 
