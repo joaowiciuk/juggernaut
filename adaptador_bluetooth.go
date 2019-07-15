@@ -54,7 +54,9 @@ func (a *adaptadorBluetooth) servicoUnico() *gatt.Service {
 
 	lerTemp := s.AddCharacteristic(gatt.MustParseUUID("aee5af4f-d1a8-4855-b770-b912519327d6"))
 	lerTemp.HandleReadFunc(func(rsp gatt.ResponseWriter, req *gatt.ReadRequest) {
-		for requisicao {
+		a.registrador.Printf("Requisição de temperatura")
+		pendente := true
+		for pendente {
 			a.registrador.Printf("Iniciando leitura de temperatura...")
 			cmd := exec.Command("/bin/sh", "-c", "vcgencmd measure_temp")
 			//Saída padrão do comando
@@ -87,7 +89,7 @@ func (a *adaptadorBluetooth) servicoUnico() *gatt.Service {
 			}
 			a.registrador.Printf("Temperatura lida %.2f\n", temp)
 			fmt.Fprintf(rsp, "%f", temp)
-			requisicao = false
+			pendente = false
 		}
 		//Intervalo para não estressar o dispositivo
 		time.Sleep(time.Second * 1)
