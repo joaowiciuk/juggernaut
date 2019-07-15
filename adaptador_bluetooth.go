@@ -247,7 +247,11 @@ func (a *adaptadorBluetooth) servicoUnico() *gatt.Service {
 	lerNomeCliente := s.AddCharacteristic(gatt.MustParseUUID("55cc9c0d-d42d-4f0f-850c-00b1809007e7"))
 	lerNomeCliente.HandleReadFunc(func(rsp gatt.ResponseWriter, req *gatt.ReadRequest) {
 		nomeCliente := a.banco.lerNomeCliente()
-		fmt.Fprintf(rsp, "%s", nomeCliente)
+		if nomeCliente == "" {
+			fmt.Fprint(rsp, "indefinido")
+		} else {
+			fmt.Fprintf(rsp, "%s", nomeCliente)
+		}
 		a.registrador.Printf("nome-cliente solicitado: %s\n", nomeCliente)
 	})
 
