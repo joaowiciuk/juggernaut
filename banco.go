@@ -104,3 +104,33 @@ func (b *banco) lerIP() (ip string) {
 	})
 	return
 }
+
+func (b *banco) salvarNomeCliente(nomeCliente string) error {
+	if nomeCliente == "" {
+		b.registrador.Printf("Erro: nome-cliente inválido fornecido: %s\n", nomeCliente)
+		return errors.New("nome-cliente inválido")
+	}
+	erroExterno := b.nucleo.Update(func(tx *bolt.Tx) error {
+		balde, erroInterno := tx.CreateBucketIfNotExists([]byte("config"))
+		if erroInterno != nil {
+			b.registrador.Printf("Erro: não foi possível criar balde\n")
+			return fmt.Errorf("criar balde: %s", erroInterno)
+		}
+		erroInterno = balde.Put([]byte("nome-cliente"), []byte(nomeCliente))
+		return erroInterno
+	})
+	return erroExterno
+}
+
+func (b *banco) lerNomeCliente() (nomeCliente string) {
+	b.nucleo.View(func(tx *bolt.Tx) error {
+		balde := tx.Bucket([]byte("config"))
+		if balde == nil {
+			nomeCliente = ""
+		} else {
+			nomeCliente = string(balde.Get([]byte("nome-cliente")))
+		}
+		return nil
+	})
+	return
+}

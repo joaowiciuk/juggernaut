@@ -54,7 +54,6 @@ func (a *adaptadorBluetooth) servicoUnico() *gatt.Service {
 
 	lerTemp := s.AddCharacteristic(gatt.MustParseUUID("aee5af4f-d1a8-4855-b770-b912519327d6"))
 	lerTemp.HandleReadFunc(func(rsp gatt.ResponseWriter, req *gatt.ReadRequest) {
-		a.registrador.Printf("Requisição de temperatura")
 		pendente := true
 		for pendente {
 			a.registrador.Printf("Iniciando leitura de temperatura...")
@@ -107,8 +106,8 @@ func (a *adaptadorBluetooth) servicoUnico() *gatt.Service {
 		return gatt.StatusSuccess
 	})
 
-	lerSSIDs := s.AddCharacteristic(gatt.UUID16(0x2A04))
-	lerSSIDs.HandleNotifyFunc(func(r gatt.Request, notifier gatt.Notifier) {
+	notificarSSIDs := s.AddCharacteristic(gatt.MustParseUUID("34a97fc8-5118-4484-b022-0c8a467cd533"))
+	notificarSSIDs.HandleNotifyFunc(func(r gatt.Request, notifier gatt.Notifier) {
 		//Enquanto as notificações não forem desativadas para a Characteristic...
 		for !notifier.Done() {
 			//Repete tentativa de descoberta de SSIDs pelo servidor GATT
@@ -233,6 +232,23 @@ func (a *adaptadorBluetooth) servicoUnico() *gatt.Service {
 		a.banco.salvarIP(ip)
 		a.registrador.Printf("IP escrito: %s\n", ip)
 		return gatt.StatusSuccess
+	})
+
+	escreverNomeCliente := s.AddCharacteristic(gatt.MustParseUUID("cde083d8-b20c-4709-b756-2f219a911994"))
+	escreverNomeCliente.HandleWriteFunc(func(r gatt.Request, data []byte) (status byte) {
+		if a.banco.lerNomeCliente() == "" {
+			nomeCliente := string(data)
+			a.banco.salvarNomeCliente(nomeCliente)
+			a.registrador.Printf("nome-cliente escrito: %s\n", nomeCliente)
+		}
+		return gatt.StatusSuccess
+	})
+
+	lerNomeCliente := s.AddCharacteristic(gatt.MustParseUUID("55cc9c0d-d42d-4f0f-850c-00b1809007e7"))
+	lerNomeCliente.HandleReadFunc(func(rsp gatt.ResponseWriter, req *gatt.ReadRequest) {
+		nomeCliente := a.banco.lerNomeCliente()
+		fmt.Fprintf(rsp, "%s", nomeCliente)
+		a.registrador.Printf("nome-cliente solicitado: %s\n", nomeCliente)
 	})
 
 	return s
