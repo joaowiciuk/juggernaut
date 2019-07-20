@@ -84,32 +84,30 @@ func (t *Telemetria) Temperatura() float64 {
 
 func (t *Telemetria) Ligar() {
 	t.Registrador.Printf("Ligando telemetria...\n")
-	go func(t *Telemetria) {
-		var ticker *time.Ticker
-		if t.Banco.lerAmbiente() == "DES" {
-			ticker = time.NewTicker(5 * time.Second)
-		} else if t.Banco.lerAmbiente() == "PROD" {
-			ticker = time.NewTicker(60 * time.Second)
-		} else {
-			ticker = time.NewTicker(15 * time.Second)
+	var ticker *time.Ticker
+	if t.Banco.lerAmbiente() == "DES" {
+		ticker = time.NewTicker(5 * time.Second)
+	} else if t.Banco.lerAmbiente() == "PROD" {
+		ticker = time.NewTicker(60 * time.Second)
+	} else {
+		ticker = time.NewTicker(15 * time.Second)
+	}
+	defer ticker.Stop()
+	for range ticker.C {
+		mensagem := Mensagem{
+			Contexto: "telemetria",
+			Conteudo: make(map[string]interface{}),
 		}
-		defer ticker.Stop()
-		for range ticker.C {
-			mensagem := Mensagem{
-				Contexto: "telemetria",
-				Conteudo: make(map[string]interface{}),
-			}
-			mensagem.Conteudo["temperatura"] = t.Temperatura()
-			dados, err := json.Marshal(mensagem)
-			if err != nil {
-				t.Registrador.Println("codificar temperatura:", err)
-				return
-			}
-			err = t.Websocket.WriteMessage(websocket.TextMessage, dados)
-			if err != nil {
-				t.Registrador.Println("escrever socket:", err)
-				return
-			}
+		mensagem.Conteudo["temperatura"] = t.Temperatura()
+		dados, err := json.Marshal(mensagem)
+		if err != nil {
+			t.Registrador.Println("codificar temperatura:", err)
+			return
 		}
-	}(t)
+		err = t.Websocket.WriteMessage(websocket.TextMessage, dados)
+		if err != nil {
+			t.Registrador.Println("escrever socket:", err)
+			return
+		}
+	}
 }
