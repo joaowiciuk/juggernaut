@@ -103,7 +103,6 @@ func (t *Telemetria) Comunicar() {
 	t.Registrador.Printf("Telemetria Comunicar()\n")
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt)
-
 	ambiente := t.Banco.lerAmbiente()
 	var host string
 	if ambiente == "DES" {
@@ -111,19 +110,15 @@ func (t *Telemetria) Comunicar() {
 	} else if ambiente == "PROD" {
 		host = "http://solutech.site"
 	}
-
 	u := url.URL{Scheme: "ws", Host: host, Path: "/shc/telemetria"}
 	log.Printf("connecting to %s", u.String())
-
 	c, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
 	if err != nil {
 		t.Registrador.Fatal("dial:", err)
 		return
 	}
 	defer c.Close()
-
 	done := make(chan struct{})
-
 	go func() {
 		defer close(done)
 		for {
@@ -137,24 +132,38 @@ func (t *Telemetria) Comunicar() {
 	}()
 	t.Websocket = c
 	t.Registrador.Printf("Telemetria inicializada")
-
-	ticker := time.NewTicker(5 * time.Second)
+	var ticker *time.Ticker
+	if t.Banco.lerAmbiente() == "DES" {
+		ticker = time.NewTicker(5 * time.Second)
+	} else if t.Banco.lerAmbiente() == "PROD" {
+		ticker = time.NewTicker(60 * time.Second)
+	} else {
+		ticker = time.NewTicker(15 * time.Second)
+	}
 	defer ticker.Stop()
 	for {
 		select {
 		case <-done:
 			return
-		case t := <-ticker.C:
-			err := c.WriteMessage(websocket.TextMessage, []byte(t.String()))
+		case instant := <-ticker.C:
+			mensagem := Mensagem{
+				Contexto: "telemetria",
+				Conteudo: make(map[string]interface{}),
+			}
+			mensagem.Conteudo["temperatura"] = t.Temperatura()
+			mensagem.Conteudo["tempo"] = instant
+			dados, err := json.Marshal(mensagem)
+			if err != nil {
+				t.Registrador.Println("codificar mensagem:", err)
+				return
+			}
+			err = c.WriteMessage(websocket.BinaryMessage, dados)
 			if err != nil {
 				log.Println("write:", err)
 				return
 			}
 		case <-interrupt:
 			log.Println("interrupt")
-
-			// Cleanly close the connection by sending a close message and then
-			// waiting (with timeout) for the server to close the connection.
 			err := c.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
 			if err != nil {
 				log.Println("write close:", err)
