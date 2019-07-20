@@ -84,7 +84,7 @@ func (t *Telemetria) Temperatura() float64 {
 
 func (t *Telemetria) Ligar() {
 	t.Registrador.Printf("Ligando telemetria...\n")
-	go func() {
+	go func(t *Telemetria) {
 		var ticker *time.Ticker
 		if t.Banco.lerAmbiente() == "DES" {
 			ticker = time.NewTicker(5 * time.Second)
@@ -111,5 +111,5 @@ func (t *Telemetria) Ligar() {
 				return
 			}
 		}
-	}()
+	}(t)
 }
