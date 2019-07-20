@@ -68,37 +68,6 @@ func (t *Telemetria) Temperatura() float64 {
 	return value
 }
 
-func (t *Telemetria) Ligar() {
-	t.Registrador.Printf("Ligando telemetria...\n")
-	var ticker *time.Ticker
-	if t.Banco.lerAmbiente() == "DES" {
-		ticker = time.NewTicker(5 * time.Second)
-	} else if t.Banco.lerAmbiente() == "PROD" {
-		ticker = time.NewTicker(60 * time.Second)
-	} else {
-		ticker = time.NewTicker(15 * time.Second)
-	}
-	defer ticker.Stop()
-	for range ticker.C {
-		mensagem := Mensagem{
-			Contexto: "telemetria",
-			Conteudo: make(map[string]interface{}),
-		}
-		mensagem.Conteudo["temperatura"] = t.Temperatura()
-		dados, err := json.Marshal(mensagem)
-		if err != nil {
-			t.Registrador.Println("codificar temperatura:", err)
-			return
-		}
-		err = t.Websocket.WriteMessage(websocket.TextMessage, dados)
-		if err != nil {
-			t.Registrador.Println("escrever socket:", err)
-			return
-		}
-		t.Registrador.Printf("Temperatura enviada: %.2f.\n", mensagem.Conteudo["temperatura"])
-	}
-}
-
 func (t *Telemetria) Comunicar() {
 	t.Registrador.Printf("Telemetria Comunicar()\n")
 	interrupt := make(chan os.Signal, 1)
@@ -118,18 +87,6 @@ func (t *Telemetria) Comunicar() {
 		return
 	}
 	defer c.Close()
-	done := make(chan struct{})
-	go func() {
-		defer close(done)
-		for {
-			_, message, err := c.ReadMessage()
-			if err != nil {
-				t.Registrador.Println("Ao receber mensagem: ", err)
-				return
-			}
-			t.Registrador.Printf("Recebido: %s", message)
-		}
-	}()
 	t.Websocket = c
 	t.Registrador.Printf("Telemetria inicializada")
 	var ticker *time.Ticker
@@ -141,11 +98,11 @@ func (t *Telemetria) Comunicar() {
 		ticker = time.NewTicker(15 * time.Second)
 	}
 	defer ticker.Stop()
-	for {
+	isUp := true
+	for isUp {
 		select {
-		case <-done:
-			return
 		case instant := <-ticker.C:
+			//Writing
 			mensagem := Mensagem{
 				Contexto: "telemetria",
 				Conteudo: make(map[string]interface{}),
@@ -155,25 +112,33 @@ func (t *Telemetria) Comunicar() {
 			dados, err := json.Marshal(mensagem)
 			if err != nil {
 				t.Registrador.Println("codificar mensagem:", err)
-				return
+				isUp = false
 			}
 			err = c.WriteMessage(websocket.BinaryMessage, dados)
 			if err != nil {
 				log.Println("write:", err)
-				return
+				isUp = false
 			}
+
+			//Reading
+			_, message, err := c.ReadMessage()
+			if err != nil {
+				t.Registrador.Println("Ao receber mensagem: ", err)
+				isUp = false
+			}
+			t.Registrador.Printf("Recebido: %s", message)
 		case <-interrupt:
 			log.Println("interrupt")
 			err := c.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
 			if err != nil {
 				log.Println("write close:", err)
-				return
+				isUp = false
 			}
 			select {
-			case <-done:
 			case <-time.After(time.Second):
 			}
-			return
+			isUp = false
 		}
 	}
+	t.Comunicar()
 }

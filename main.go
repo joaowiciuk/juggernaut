@@ -11,6 +11,11 @@ import (
 
 var logFile *os.File
 
+const (
+	UUID       = "56a01ff8-ce43-4b6f-9ad7-fa819a713fcf"
+	Identifier = "SHC 0"
+)
+
 func init() {
 	logFile, err := os.OpenFile("registro_principal", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0666)
 	if err != nil {
