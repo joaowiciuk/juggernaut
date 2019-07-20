@@ -49,7 +49,7 @@ func NewTelemetria(b *banco) Telemetria {
 }
 
 func (t *Telemetria) Desligar() {
-	t.Registrador.Printf("Encerrando telemetria de dados...\n")
+	t.Registrador.Printf("Desligando telemetria...\n")
 	t.Registro.Close()
 	t.Websocket.Close()
 }
@@ -83,6 +83,7 @@ func (t *Telemetria) Temperatura() float64 {
 }
 
 func (t *Telemetria) Ligar() {
+	t.Registrador.Printf("Ligando telemetria...\n")
 	go func() {
 		var ticker *time.Ticker
 		if t.Banco.lerAmbiente() == "DES" {
