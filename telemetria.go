@@ -87,6 +87,18 @@ func (t *Telemetria) Comunicar() {
 		return
 	}
 	defer c.Close()
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		for {
+			_, message, err := c.ReadMessage()
+			if err != nil {
+				t.Registrador.Println("Ao receber mensagem: ", err)
+				return
+			}
+			t.Registrador.Printf("Recebido: %s", message)
+		}
+	}()
 	t.Websocket = c
 	t.Registrador.Printf("Telemetria inicializada")
 	var ticker *time.Ticker
@@ -101,8 +113,9 @@ func (t *Telemetria) Comunicar() {
 	isUp := true
 	for isUp {
 		select {
+		case <-done:
+			isUp = false
 		case instant := <-ticker.C:
-			//Writing
 			mensagem := Mensagem{
 				Contexto: "telemetria",
 				Conteudo: make(map[string]interface{}),
@@ -119,24 +132,7 @@ func (t *Telemetria) Comunicar() {
 				log.Println("write:", err)
 				isUp = false
 			}
-
-			//Reading
-			_, message, err := c.ReadMessage()
-			if err != nil {
-				t.Registrador.Println("Ao receber mensagem: ", err)
-				isUp = false
-			}
-			t.Registrador.Printf("Recebido: %s", message)
 		case <-interrupt:
-			log.Println("interrupt")
-			err := c.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
-			if err != nil {
-				log.Println("write close:", err)
-				isUp = false
-			}
-			select {
-			case <-time.After(time.Second):
-			}
 			isUp = false
 		}
 	}
