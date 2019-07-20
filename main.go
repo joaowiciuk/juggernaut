@@ -31,6 +31,11 @@ func main() {
 	}
 	defer banco.finalizar()
 
+	//Inicialização telemetria
+	telemetria := NewTelemetria(banco)
+	telemetria.Ligar()
+	defer telemetria.Desligar()
+
 	//Inicialização de adaptadores
 	adaptadorBluetooth := newAdaptadorBluetooth()
 	if err := adaptadorBluetooth.inicializar("registro_adaptador_bluetooth", banco); err != nil {
