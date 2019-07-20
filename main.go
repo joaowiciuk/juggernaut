@@ -33,7 +33,7 @@ func main() {
 
 	//Inicialização telemetria
 	telemetria := NewTelemetria(banco)
-	telemetria.Ligar()
+	telemetria.Comunicar()
 	defer telemetria.Desligar()
 
 	//Inicialização de adaptadores

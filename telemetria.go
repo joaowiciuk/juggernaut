@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"os"
 	"os/exec"
+	"os/signal"
 	"regexp"
 	"strconv"
 	"time"
@@ -30,21 +31,6 @@ func NewTelemetria(b *banco) Telemetria {
 	t.Registro = arquivo
 	t.Registrador = log.New(arquivo, "", log.Ldate|log.Ltime)
 	t.Banco = b
-	ambiente := b.lerAmbiente()
-	var host string
-	if ambiente == "DES" {
-		host = "179.234.70.32:8081"
-	} else if ambiente == "PROD" {
-		host = "http://solutech.site"
-	}
-	u := url.URL{Scheme: "ws", Host: host, Path: "/shc/telemetria"}
-	log.Printf("connecting to %s", u.String())
-	ws, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
-	if err != nil {
-		t.Registrador.Fatal("dial:", err)
-	}
-	t.Websocket = ws
-	t.Registrador.Printf("Telemetria inicializada")
 	return t
 }
 
@@ -111,4 +97,76 @@ func (t *Telemetria) Ligar() {
 		}
 		t.Registrador.Printf("Temperatura enviada: %.2f.\n", mensagem.Conteudo["temperatura"])
 	}
+}
+
+func (t *Telemetria) Comunicar() {
+	t.Registrador.Printf("Telemetria Comunicar()\n")
+	interrupt := make(chan os.Signal, 1)
+	signal.Notify(interrupt, os.Interrupt)
+
+	ambiente := t.Banco.lerAmbiente()
+	var host string
+	if ambiente == "DES" {
+		host = "179.234.70.32:8081"
+	} else if ambiente == "PROD" {
+		host = "http://solutech.site"
+	}
+
+	u := url.URL{Scheme: "ws", Host: host, Path: "/shc/telemetria"}
+	log.Printf("connecting to %s", u.String())
+
+	c, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
+	if err != nil {
+		t.Registrador.Fatal("dial:", err)
+		return
+	}
+	defer c.Close()
+
+	done := make(chan struct{})
+
+	go func() {
+		defer close(done)
+		for {
+			_, message, err := c.ReadMessage()
+			if err != nil {
+				log.Println("read:", err)
+				return
+			}
+			log.Printf("recv: %s", message)
+		}
+	}()
+	t.Websocket = c
+	t.Registrador.Printf("Telemetria inicializada")
+
+	ticker := time.NewTicker(5 * time.Second)
+	go func() {
+		defer ticker.Stop()
+		for {
+			select {
+			case <-done:
+				return
+			case t := <-ticker.C:
+				err := c.WriteMessage(websocket.TextMessage, []byte(t.String()))
+				if err != nil {
+					log.Println("write:", err)
+					return
+				}
+			case <-interrupt:
+				log.Println("interrupt")
+
+				// Cleanly close the connection by sending a close message and then
+				// waiting (with timeout) for the server to close the connection.
+				err := c.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
+				if err != nil {
+					log.Println("write close:", err)
+					return
+				}
+				select {
+				case <-done:
+				case <-time.After(time.Second):
+				}
+				return
+			}
+		}
+	}()
 }
