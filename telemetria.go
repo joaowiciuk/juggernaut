@@ -109,5 +109,6 @@ func (t *Telemetria) Ligar() {
 			t.Registrador.Println("escrever socket:", err)
 			return
 		}
+		t.Registrador.Printf("Temperatura enviada: %.2f.\n", mensagem.Conteudo["temperatura"])
 	}
 }
