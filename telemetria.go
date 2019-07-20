@@ -116,13 +116,13 @@ func (t *Telemetria) Comunicar() {
 		case <-done:
 			isUp = false
 		case instant := <-ticker.C:
-			mensagem := Mensagem{
-				Contexto: "telemetria",
-				Conteudo: make(map[string]interface{}),
+			device := Device{
+				UUID:        UUID,
+				Identifier:  Identifier,
+				Temperature: t.Temperatura(),
+				LastUpdate:  instant,
 			}
-			mensagem.Conteudo["temperatura"] = t.Temperatura()
-			mensagem.Conteudo["tempo"] = instant
-			dados, err := json.Marshal(mensagem)
+			dados, err := json.Marshal(device)
 			if err != nil {
 				t.Registrador.Println("codificar mensagem:", err)
 				isUp = false
