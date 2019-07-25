@@ -95,7 +95,7 @@ func (rm *RelayManager) RelayHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.Println(err)
+		rm.Logger.Printf("relay handler: %v", err)
 		return
 	}
 	defer conn.Close()
