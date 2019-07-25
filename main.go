@@ -36,6 +36,13 @@ func main() {
 	}
 	defer banco.finalizar()
 
+	//RelayManager
+	relayManager := NewRelayManager()
+	if err := relayManager.Initialize("registro_rele"); err != nil {
+		log.Fatalf("initializing relay manager: %v\n", err)
+	}
+	defer relayManager.Finish()
+
 	//Inicialização telemetria
 	telemetria := NewTelemetria(banco)
 	go telemetria.Comunicar()
@@ -53,6 +60,7 @@ func main() {
 		log.Fatalf("Falha ao inicializar adaptador wifi\n")
 	}
 	defer adaptadorWifi.finalizar()
+	adaptadorWifi.adicionarRota(RelayHandlerToggler(relayManager), "/api/relay/toggle/{pin}", "GET")
 
 	auditorSimples := newAuditorSimples()
 	if err := auditorSimples.inicializar("registro_auditor"); err != nil {
