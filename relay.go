@@ -4,16 +4,36 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"strconv"
 
-	"github.com/gorilla/mux"
-
+	"github.com/gorilla/websocket"
 	rpio "github.com/stianeikeland/go-rpio"
 )
 
 type RelayManager struct {
 	LogFile *os.File
 	Logger  *log.Logger
+}
+
+const (
+	RelayToggle = "toggle"
+	RelayOn     = "on"
+	RelayOff    = "off"
+)
+
+type Relay struct {
+	Pin     int    `json:"pin"`
+	Command string `json:"command"`
+}
+
+const (
+	RelayStatusOn        = "on"
+	RelayStatusOff       = "off"
+	RelayStatusUndefined = "undefined"
+)
+
+type RelayFeedback struct {
+	Pin    int    `json:"pin"`
+	Status string `json:"status"`
 }
 
 func NewRelayManager() *RelayManager {
@@ -35,46 +55,57 @@ func (rm *RelayManager) Finish() {
 	rm.LogFile.Close()
 }
 
-func (rm *RelayManager) Toggle(pin int) {
+func (rm *RelayManager) Operate(relay Relay) (feedback RelayFeedback) {
+	feedback = RelayFeedback{
+		Pin:    relay.Pin,
+		Status: RelayStatusUndefined,
+	}
 	if err := rpio.Open(); err != nil {
 		rm.Logger.Printf("opening rpio: %v\n", err)
+		return feedback
+	}
+	defer rpio.Close()
+	rpioPin := rpio.Pin(relay.Pin)
+	rpioPin.Output()
+	switch relay.Command {
+	case RelayToggle:
+		rpioPin.Toggle()
+		rm.Logger.Printf("Toggle relay on pin %d.\n", relay.Pin)
+	case RelayOn:
+		rpioPin.Low()
+		rm.Logger.Printf("Switch on relay on pin %d.\n", relay.Pin)
+	case RelayOff:
+		rpioPin.High()
+		rm.Logger.Printf("Switch off relay on pin %d.\n", relay.Pin)
+	default:
+		rpioPin.Toggle()
+		rm.Logger.Printf("Toggle relay on pin %d.\n", relay.Pin)
+	}
+
+	//TODO: Read relay status
+	feedback.Status = RelayStatusUndefined
+	return feedback
+}
+
+func (rm *RelayManager) RelayHandler(w http.ResponseWriter, r *http.Request) {
+	var upgrader = websocket.Upgrader{
+		ReadBufferSize:  1024,
+		WriteBufferSize: 1024,
+	}
+	conn, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		log.Println(err)
 		return
 	}
-	defer rpio.Close()
-	rpioPin := rpio.Pin(pin)
-	rpioPin.Output()
-	rpioPin.Toggle()
-	rm.Logger.Printf("Pin %d toggled\n", pin)
-}
-
-type rele struct {
-	pino    int
-	comando string
-}
-
-func (r *rele) acionar() {
-	if err := rpio.Open(); err != nil {
-		log.Printf("Erro ao acionar relé\n")
-		log.Panicf("%v", *r)
-	}
-	defer rpio.Close()
-	pin := rpio.Pin(r.pino)
-	pin.Output()
-	switch r.comando {
-	default:
-		pin.Toggle()
-	case "ligar":
-		pin.High()
-	case "desligar":
-		pin.Low()
-	}
-}
-
-func RelayHandlerToggler(rm *RelayManager) func(w http.ResponseWriter, r *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		pinStr := mux.Vars(r)["pin"]
-		pin, _ := strconv.Atoi(pinStr)
-		rm.Toggle(pin)
-		w.WriteHeader(http.StatusOK)
+	defer conn.Close()
+	for {
+		var relay Relay
+		err := conn.ReadJSON(&relay)
+		if err != nil {
+			rm.Logger.Printf("relay handler: %v\n", err)
+			continue
+		}
+		feedback := rm.Operate(relay)
+		conn.WriteJSON(feedback)
 	}
 }
