@@ -88,6 +88,7 @@ func (rm *RelayManager) Operate(relay Relay) (feedback RelayFeedback) {
 }
 
 func (rm *RelayManager) RelayHandler(w http.ResponseWriter, r *http.Request) {
+	rm.Logger.Printf("relay handler: request received.\n")
 	var upgrader = websocket.Upgrader{
 		ReadBufferSize:  1024,
 		WriteBufferSize: 1024,
