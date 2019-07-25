@@ -27,6 +27,7 @@ func (rm *RelayManager) Initialize(logPath string) (err error) {
 	}
 	rm.LogFile = f
 	rm.Logger = log.New(f, "", log.Ldate|log.Ltime)
+	rm.Logger.Printf("Relay manager started.\n")
 	return nil
 }
 
@@ -43,6 +44,7 @@ func (rm *RelayManager) Toggle(pin int) {
 	rpioPin := rpio.Pin(pin)
 	rpioPin.Output()
 	rpioPin.Toggle()
+	rm.Logger.Printf("Pin %d toggled\n", pin)
 }
 
 type rele struct {
