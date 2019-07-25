@@ -60,7 +60,7 @@ func main() {
 		log.Fatalf("Falha ao inicializar adaptador wifi\n")
 	}
 	defer adaptadorWifi.finalizar()
-	adaptadorWifi.adicionarRota(relayManager.RelayHandler, "/api/relay", "GET")
+	adaptadorWifi.adicionarRota(relayManager.RelayHandler, "/api/relay", "POST")
 
 	auditorSimples := newAuditorSimples()
 	if err := auditorSimples.inicializar("registro_auditor"); err != nil {
