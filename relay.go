@@ -102,6 +102,7 @@ func (rm *RelayManager) RelayHandler(w http.ResponseWriter, r *http.Request) {
 	for {
 		var relay Relay
 		err := conn.ReadJSON(&relay)
+		rm.Logger.Printf("relay handler: relay received: %v.\n", relay)
 		if err != nil {
 			rm.Logger.Printf("relay handler: %v\n", err)
 			continue
