@@ -83,7 +83,13 @@ func (rm *RelayManager) Operate(relay Relay) (feedback RelayFeedback) {
 	}
 
 	//TODO: Read relay status
-	feedback.Status = RelayStatusUndefined
+	rpioPin = rpio.Pin(24)
+	rpioPin.Input()
+	if rpioPin.Read() == rpio.High {
+		feedback.Status = RelayStatusOn
+	} else {
+		feedback.Status = RelayStatusOff
+	}
 	return feedback
 }
 
