@@ -18,10 +18,10 @@ import (
 )
 
 type BluetoothManager struct {
-	LogFile  *os.File
-	Logger   *log.Logger
-	Device   gatt.Device
-	Database *banco
+	LogFile         *os.File
+	Logger          *log.Logger
+	Device          gatt.Device
+	DatabaseManager *DatabaseManager
 }
 
 func NewBluetoothManager() (bm *BluetoothManager) {
@@ -34,8 +34,8 @@ func NewBluetoothManager() (bm *BluetoothManager) {
 	}
 }
 
-func (bm *BluetoothManager) Initialize(endereco string, database *banco) error {
-	f, err := os.OpenFile(endereco, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0666)
+func (bm *BluetoothManager) Initialize(logPath string, database *DatabaseManager) error {
+	f, err := os.OpenFile(logPath, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0666)
 	if err != nil {
 		return err
 	}
@@ -60,7 +60,7 @@ func (bm *BluetoothManager) Initialize(endereco string, database *banco) error {
 		}
 	}
 	bm.Device.Init(onStateChanged)
-	bm.Database = database
+	bm.DatabaseManager = database
 	bm.Logger.Printf("BluetoothManager started.\n")
 	return nil
 }
@@ -225,7 +225,7 @@ func (bm *BluetoothManager) Service() *gatt.Service {
 
 	readEnvironment := s.AddCharacteristic(gatt.MustParseUUID("ff39ae7e-61b6-4f67-af74-324e7af948bd"))
 	readEnvironment.HandleReadFunc(func(rsp gatt.ResponseWriter, req *gatt.ReadRequest) {
-		environment := bm.Database.lerAmbiente()
+		environment := bm.DatabaseManager.ReadEnvironment()
 		rsp.SetStatus(gatt.StatusSuccess)
 		fmt.Fprintf(rsp, "%s", environment)
 	})
@@ -233,13 +233,13 @@ func (bm *BluetoothManager) Service() *gatt.Service {
 	writeEnvironment := s.AddCharacteristic(gatt.MustParseUUID("2f54b94a-a6fe-4d5f-a4ca-932a362eba10"))
 	writeEnvironment.HandleWriteFunc(func(r gatt.Request, data []byte) (status byte) {
 		environment := string(data)
-		bm.Database.salvarAmbiente(environment)
+		bm.DatabaseManager.UpdateEnvironment(environment)
 		return gatt.StatusSuccess
 	})
 
 	readIP := s.AddCharacteristic(gatt.MustParseUUID("02e9a221-8643-451e-ad92-deeec489c44b"))
 	readIP.HandleReadFunc(func(rsp gatt.ResponseWriter, req *gatt.ReadRequest) {
-		ip := bm.Database.lerIP()
+		ip := bm.DatabaseManager.ReadIP()
 		rsp.SetStatus(gatt.StatusSuccess)
 		fmt.Fprintf(rsp, "%s", ip)
 	})
@@ -247,13 +247,13 @@ func (bm *BluetoothManager) Service() *gatt.Service {
 	writeIP := s.AddCharacteristic(gatt.MustParseUUID("92e6b940-1ed5-43fb-b942-6ac51ad5d72d"))
 	writeIP.HandleWriteFunc(func(r gatt.Request, data []byte) (status byte) {
 		ip := string(data)
-		bm.Database.salvarIP(ip)
+		bm.DatabaseManager.UpdateIP(ip)
 		return gatt.StatusSuccess
 	})
 
 	readIdentifier := s.AddCharacteristic(gatt.MustParseUUID("55cc9c0d-d42d-4f0f-850c-00b1809007e7"))
 	readIdentifier.HandleReadFunc(func(rsp gatt.ResponseWriter, req *gatt.ReadRequest) {
-		identifier := bm.Database.lerNomeCliente()
+		identifier := bm.DatabaseManager.ReadIdentifier()
 		if identifier == "" {
 			fmt.Fprint(rsp, "undefined")
 		} else {
@@ -263,10 +263,28 @@ func (bm *BluetoothManager) Service() *gatt.Service {
 
 	writeIdentifier := s.AddCharacteristic(gatt.MustParseUUID("cde083d8-b20c-4709-b756-2f219a911994"))
 	writeIdentifier.HandleWriteFunc(func(r gatt.Request, data []byte) (status byte) {
-		if bm.Database.lerNomeCliente() == "" {
+		if bm.DatabaseManager.ReadIdentifier() == "" {
 			identifier := string(data)
-			bm.Database.salvarNomeCliente(identifier)
-			bm.Logger.Printf("nome-cliente escrito: %s\n", identifier)
+			bm.DatabaseManager.UpdateIdentifier(identifier)
+		}
+		return gatt.StatusSuccess
+	})
+
+	readUUID := s.AddCharacteristic(gatt.MustParseUUID("55cc9c0d-d42d-4f0f-850c-00b1809007e7"))
+	readUUID.HandleReadFunc(func(rsp gatt.ResponseWriter, req *gatt.ReadRequest) {
+		uuid := bm.DatabaseManager.ReadUUID()
+		if uuid == "" {
+			fmt.Fprint(rsp, "undefined")
+		} else {
+			fmt.Fprintf(rsp, "%s", uuid)
+		}
+	})
+
+	writeUUID := s.AddCharacteristic(gatt.MustParseUUID("cde083d8-b20c-4709-b756-2f219a911994"))
+	writeUUID.HandleWriteFunc(func(r gatt.Request, data []byte) (status byte) {
+		if bm.DatabaseManager.ReadUUID() == "" {
+			uuid := string(data)
+			bm.DatabaseManager.UpdateUUID(uuid)
 		}
 		return gatt.StatusSuccess
 	})

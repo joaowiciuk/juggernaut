@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"encoding/json"
 	"log"
 	"net/url"
 	"os"
@@ -15,75 +14,79 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-type Telemetria struct {
-	Banco       *banco
-	Registro    *os.File
-	Registrador *log.Logger
-	Websocket   *websocket.Conn
+type TelemetryManager struct {
+	DatabaseManager *DatabaseManager
+	LogFile         *os.File
+	Logger          *log.Logger
+	Websocket       *websocket.Conn
 }
 
-func NewTelemetria(b *banco) Telemetria {
-	var t Telemetria
-	arquivo, err := os.OpenFile("registro_telemetria", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0666)
+func NewTelemetryManager() TelemetryManager {
+	return TelemetryManager{}
+}
+
+func (t *TelemetryManager) Initialize(logPath string, database *DatabaseManager) (err error) {
+	f, err := os.OpenFile(logPath, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0666)
 	if err != nil {
-		log.Fatalf("Não foi possível inicializar telemetria: %v\n", err)
+		return err
 	}
-	t.Registro = arquivo
-	t.Registrador = log.New(arquivo, "", log.Ldate|log.Ltime)
-	t.Banco = b
-	return t
+	t.LogFile = f
+	t.Logger = log.New(t.LogFile, "", log.Ldate|log.Ltime)
+	t.DatabaseManager = database
+	t.Logger.Printf("TelemetryManager started.\n")
+	go t.Communicate()
+	return nil
 }
 
-func (t *Telemetria) Desligar() {
-	t.Registrador.Printf("Desligando telemetria...\n")
-	t.Registro.Close()
+func (t *TelemetryManager) Finish() {
+	t.Logger.Printf("TelemetryManager finished.\n")
+	t.LogFile.Close()
 	t.Websocket.Close()
 }
 
-func (t *Telemetria) Temperatura() float64 {
+func (t *TelemetryManager) ReadTemperature() float64 {
 	cmd := exec.Command("/bin/sh", "-c", "vcgencmd measure_temp")
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
-		t.Registrador.Println(err)
+		t.Logger.Println(err)
 		return 0
 	}
 	if err := cmd.Start(); err != nil {
-		t.Registrador.Println(err)
+		t.Logger.Println(err)
 		return 0
 	}
 	buf := new(bytes.Buffer)
 	buf.ReadFrom(stdout)
 	output := buf.String()
 	if err := cmd.Wait(); err != nil {
-		t.Registrador.Println(err)
+		t.Logger.Println(err)
 		return 0
 	}
 	re := regexp.MustCompile(`temp=(.*)'C`)
 	submatches := re.FindAllStringSubmatch(output, -1)
 	value, err := strconv.ParseFloat(submatches[0][1], 64)
 	if err != nil {
-		t.Registrador.Println(err)
+		t.Logger.Println(err)
 		return 0
 	}
 	return value
 }
 
-func (t *Telemetria) Comunicar() {
-	t.Registrador.Printf("Telemetria Comunicar()\n")
+func (t *TelemetryManager) Communicate() {
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt)
-	ambiente := t.Banco.lerAmbiente()
+	environment := t.DatabaseManager.ReadEnvironment()
 	var host string
-	if ambiente == "DES" {
+	if environment == EnvironmentDevelopment {
 		host = "179.234.70.32:8081"
-	} else if ambiente == "PROD" {
+	} else if environment == EnvironmentProduction {
 		host = "http://solutech.site"
 	}
 	u := url.URL{Scheme: "ws", Host: host, Path: "/shc/telemetria"}
 	log.Printf("connecting to %s", u.String())
 	c, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
 	if err != nil {
-		t.Registrador.Fatal("dial:", err)
+		t.Logger.Fatal("dial:", err)
 		return
 	}
 	defer c.Close()
@@ -93,18 +96,17 @@ func (t *Telemetria) Comunicar() {
 		for {
 			_, message, err := c.ReadMessage()
 			if err != nil {
-				t.Registrador.Println("Ao receber mensagem: ", err)
+				t.Logger.Println("Ao receber mensagem: ", err)
 				return
 			}
-			t.Registrador.Printf("Recebido: %s", message)
+			t.Logger.Printf("Recebido: %s", message)
 		}
 	}()
 	t.Websocket = c
-	t.Registrador.Printf("Telemetria inicializada")
 	var ticker *time.Ticker
-	if t.Banco.lerAmbiente() == "DES" {
+	if t.DatabaseManager.ReadEnvironment() == EnvironmentDevelopment {
 		ticker = time.NewTicker(5 * time.Second)
-	} else if t.Banco.lerAmbiente() == "PROD" {
+	} else if t.DatabaseManager.ReadEnvironment() == EnvironmentProduction {
 		ticker = time.NewTicker(60 * time.Second)
 	} else {
 		ticker = time.NewTicker(15 * time.Second)
@@ -116,26 +118,20 @@ func (t *Telemetria) Comunicar() {
 		case <-done:
 			isUp = false
 		case instant := <-ticker.C:
-			identifier := t.Banco.lerNomeCliente()
 			device := Device{
-				UUID:        UUID,
-				Identifier:  identifier,
-				Temperature: t.Temperatura(),
+				UUID:        t.DatabaseManager.ReadUUID(),
+				Identifier:  t.DatabaseManager.ReadIdentifier(),
+				Temperature: t.ReadTemperature(),
 				LastUpdate:  instant,
 			}
-			dados, err := json.Marshal(device)
+			err = c.WriteJSON(device)
 			if err != nil {
-				t.Registrador.Println("codificar mensagem:", err)
-				isUp = false
-			}
-			err = c.WriteMessage(websocket.BinaryMessage, dados)
-			if err != nil {
-				log.Println("write:", err)
+				t.Logger.Printf("writing JSON: %v\n", err)
 				isUp = false
 			}
 		case <-interrupt:
 			isUp = false
 		}
 	}
-	t.Comunicar()
+	t.Communicate()
 }

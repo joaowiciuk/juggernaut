@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/gorilla/websocket"
 	rpio "github.com/stianeikeland/go-rpio"
@@ -25,17 +26,6 @@ type Relay struct {
 	Command string `json:"command"`
 }
 
-const (
-	RelayStatusOn        = "on"
-	RelayStatusOff       = "off"
-	RelayStatusUndefined = "undefined"
-)
-
-type RelayFeedback struct {
-	Pin    int    `json:"pin"`
-	Status string `json:"status"`
-}
-
 func NewRelayManager() *RelayManager {
 	return &RelayManager{}
 }
@@ -55,14 +45,10 @@ func (rm *RelayManager) Finish() {
 	rm.LogFile.Close()
 }
 
-func (rm *RelayManager) Operate(relay Relay) (feedback RelayFeedback) {
-	feedback = RelayFeedback{
-		Pin:    relay.Pin,
-		Status: RelayStatusUndefined,
-	}
+func (rm *RelayManager) Operate(relay Relay) {
 	if err := rpio.Open(); err != nil {
 		rm.Logger.Printf("opening rpio: %v\n", err)
-		return feedback
+		return
 	}
 	defer rpio.Close()
 	rpioPin := rpio.Pin(relay.Pin)
@@ -82,15 +68,7 @@ func (rm *RelayManager) Operate(relay Relay) (feedback RelayFeedback) {
 		rm.Logger.Printf("Toggle relay on pin %d.\n", relay.Pin)
 	}
 
-	//TODO: Read relay status
-	rpioPin = rpio.Pin(24)
-	rpioPin.Input()
-	if rpioPin.Read() == rpio.High {
-		feedback.Status = RelayStatusOn
-	} else {
-		feedback.Status = RelayStatusOff
-	}
-	return feedback
+	return
 }
 
 func (rm *RelayManager) RelayHandler(w http.ResponseWriter, r *http.Request) {
@@ -114,9 +92,9 @@ func (rm *RelayManager) RelayHandler(w http.ResponseWriter, r *http.Request) {
 		rm.Logger.Printf("relay handler: relay received: %v.\n", relay)
 		if err != nil {
 			rm.Logger.Printf("relay handler: %v\n", err)
+			time.Sleep(500 * time.Millisecond)
 			continue
 		}
-		feedback := rm.Operate(relay)
-		conn.WriteJSON(feedback)
+		rm.Operate(relay)
 	}
 }

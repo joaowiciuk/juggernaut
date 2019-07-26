@@ -39,7 +39,7 @@ Shopify and Heroku use Bolt-backed services every day.
     - [Range scans](#range-scans)
     - [ForEach()](#foreach)
   - [Nested buckets](#nested-buckets)
-  - [Database backups](#database-backups)
+  - [DatabaseManager backups](#database-backups)
   - [Statistics](#statistics)
   - [Read-Only Mode](#read-only-mode)
   - [Mobile Use (iOS/Android)](#mobile-use-iosandroid)
@@ -514,7 +514,7 @@ func createUser(accountID int, u *User) error {
 
 
 
-### Database backups
+### DatabaseManager backups
 
 Bolt is a single file so it's easy to backup. You can use the `Tx.WriteTo()`
 function to write a consistent view of the database to a writer. If you call
@@ -637,7 +637,7 @@ func (b *BoltDB) Close() {
 }
 ```
 
-Database logic should be defined as methods on this wrapper struct.
+DatabaseManager logic should be defined as methods on this wrapper struct.
 
 To initialize this struct from the native language (both platforms now sync
 their local storage to the cloud. These snippets disable that functionality for the
