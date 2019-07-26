@@ -37,10 +37,6 @@ func (aw *adaptadorWifi) finalizar() {
 	aw.registro.Close()
 }
 
-func (aw *adaptadorWifi) processar(...interface{}) (req requisicao) {
-	return
-}
-
 func (aw *adaptadorWifi) adicionarRota(f http.HandlerFunc, endereço, método string) {
 	aw.roteador.HandleFunc(endereço, f).Methods(método)
 }
