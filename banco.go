@@ -20,7 +20,7 @@ func newBanco() *banco {
 	return &banco{}
 }
 
-func (b *banco) inicializar(enderReg string, caminNucleo string, modArqNucleo os.FileMode, opcoesNucleo *bolt.Options) error {
+func (b *banco) Initialize(enderReg string, caminNucleo string, modArqNucleo os.FileMode, opcoesNucleo *bolt.Options) error {
 	f, err := os.OpenFile(enderReg, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0666)
 	if err != nil {
 		return err
@@ -37,7 +37,7 @@ func (b *banco) inicializar(enderReg string, caminNucleo string, modArqNucleo os
 	return nil
 }
 
-func (b *banco) finalizar() {
+func (b *banco) Finish() {
 	b.registrador.Printf("Encerrando banco de dados...\n")
 	if err := b.nucleo.Close(); err != nil {
 		b.registrador.Printf("Erro: %v\n", err)

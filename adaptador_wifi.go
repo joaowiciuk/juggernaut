@@ -19,7 +19,7 @@ func newAdaptadorWifi() (aw *adaptadorWifi) {
 	return &adaptadorWifi{}
 }
 
-func (aw *adaptadorWifi) inicializar(endereco string, banco *banco) (err error) {
+func (aw *adaptadorWifi) Initialize(endereco string, banco *banco) (err error) {
 	f, err := os.OpenFile(endereco, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0666)
 	if err != nil {
 		return err
@@ -32,7 +32,7 @@ func (aw *adaptadorWifi) inicializar(endereco string, banco *banco) (err error) 
 	return nil
 }
 
-func (aw *adaptadorWifi) finalizar() {
+func (aw *adaptadorWifi) Finish() {
 	aw.registrador.Printf("Finalizando adaptador wifi...\n")
 	aw.registro.Close()
 }

@@ -31,10 +31,10 @@ func main() {
 
 	//Inicialização do banco de dados
 	banco := newBanco()
-	if err := banco.inicializar("registro_banco", "banco_de_dados.db", 0600, &bolt.Options{Timeout: 1 * time.Second}); err != nil {
+	if err := banco.Initialize("registro_banco", "banco_de_dados.db", 0600, &bolt.Options{Timeout: 1 * time.Second}); err != nil {
 		log.Fatalf("Falha ao inicializar auditor\n")
 	}
-	defer banco.finalizar()
+	defer banco.Finish()
 
 	//RelayManager
 	relayManager := NewRelayManager()
@@ -49,17 +49,17 @@ func main() {
 	defer telemetria.Desligar()
 
 	//Inicialização de adaptadores
-	adaptadorBluetooth := newAdaptadorBluetooth()
-	if err := adaptadorBluetooth.inicializar("registro_adaptador_bluetooth", banco); err != nil {
+	BluetoothManager := NewBluetoothManager()
+	if err := BluetoothManager.Initialize("registro_adaptador_bluetooth", banco); err != nil {
 		log.Fatalf("Falha ao inicializar adaptador bluetooth\n")
 	}
-	defer adaptadorBluetooth.finalizar()
+	defer BluetoothManager.Finish()
 
 	adaptadorWifi := newAdaptadorWifi()
-	if err := adaptadorWifi.inicializar("registro_adaptador_wifi", banco); err != nil {
+	if err := adaptadorWifi.Initialize("registro_adaptador_wifi", banco); err != nil {
 		log.Fatalf("Falha ao inicializar adaptador wifi\n")
 	}
-	defer adaptadorWifi.finalizar()
+	defer adaptadorWifi.Finish()
 	adaptadorWifi.adicionarRota(relayManager.RelayHandler, "/api/relay", "GET")
 
 	http.ListenAndServe(":8181", adaptadorWifi.roteador)

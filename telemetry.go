@@ -116,9 +116,10 @@ func (t *Telemetria) Comunicar() {
 		case <-done:
 			isUp = false
 		case instant := <-ticker.C:
+			identifier := t.Banco.lerNomeCliente()
 			device := Device{
 				UUID:        UUID,
-				Identifier:  Identifier,
+				Identifier:  identifier,
 				Temperature: t.Temperatura(),
 				LastUpdate:  instant,
 			}
