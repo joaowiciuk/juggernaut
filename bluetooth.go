@@ -270,7 +270,7 @@ func (bm *BluetoothManager) Service() *gatt.Service {
 		return gatt.StatusSuccess
 	})
 
-	readUUID := s.AddCharacteristic(gatt.MustParseUUID("55cc9c0d-d42d-4f0f-850c-00b1809007e7"))
+	readUUID := s.AddCharacteristic(gatt.MustParseUUID("061e21d7-75bd-48fe-b0d5-b6237ef833c7"))
 	readUUID.HandleReadFunc(func(rsp gatt.ResponseWriter, req *gatt.ReadRequest) {
 		uuid := bm.DatabaseManager.ReadUUID()
 		if uuid == "" {
@@ -280,7 +280,7 @@ func (bm *BluetoothManager) Service() *gatt.Service {
 		}
 	})
 
-	writeUUID := s.AddCharacteristic(gatt.MustParseUUID("cde083d8-b20c-4709-b756-2f219a911994"))
+	writeUUID := s.AddCharacteristic(gatt.MustParseUUID("ecb2b207-78ab-44e1-a55e-dab0c6d4bf73"))
 	writeUUID.HandleWriteFunc(func(r gatt.Request, data []byte) (status byte) {
 		if bm.DatabaseManager.ReadUUID() == "" {
 			uuid := string(data)

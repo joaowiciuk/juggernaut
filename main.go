@@ -39,11 +39,11 @@ func main() {
 	defer relayManager.Finish()
 
 	//bluetoothManager
-	/* bluetoothManager := NewBluetoothManager()
+	bluetoothManager := NewBluetoothManager()
 	if err := bluetoothManager.Initialize("bluetooth_log", database); err != nil {
 		log.Fatalf("main(): Initializing bluetoothManager: %v\n", err)
 	}
-	defer bluetoothManager.Finish() */
+	defer bluetoothManager.Finish()
 
 	//wifiManager
 	wifiManager := NewWifiManager()
