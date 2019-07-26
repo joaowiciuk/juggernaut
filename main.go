@@ -62,12 +62,6 @@ func main() {
 	defer adaptadorWifi.finalizar()
 	adaptadorWifi.adicionarRota(relayManager.RelayHandler, "/api/relay", "GET")
 
-	auditorSimples := newAuditorSimples()
-	if err := auditorSimples.inicializar("registro_auditor"); err != nil {
-		log.Fatalf("Falha ao inicializar auditor\n")
-	}
-	defer auditorSimples.finalizar()
-
 	http.ListenAndServe(":8181", adaptadorWifi.roteador)
 	log.Printf("Finalizando função principal...\n")
 }

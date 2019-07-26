@@ -568,11 +568,3 @@ func (a *adaptadorBluetooth) finalizar() {
 	a.registrador.Printf("Finalizando adaptador bluetooth...\n")
 	a.registro.Close()
 }
-
-//TODO: especificar e implementar protocolo de comunicação por bluetooth
-func (a *adaptadorBluetooth) processar(dados []byte) (r *requisicao) {
-	s := string(dados)
-	a.registrador.Printf("%d bytes recebidos\n", len(dados))
-	a.registrador.Printf("Conteúdo: %s\n", s)
-	return
-}
