@@ -86,7 +86,7 @@ func (t *TelemetryManager) Communicate() {
 	log.Printf("connecting to %s", u.String())
 	c, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
 	if err != nil {
-		t.Logger.Fatal("dial:", err)
+		t.Logger.Printf("TelemetryManager#Communicate(): dial: %v\n", err)
 		return
 	}
 	defer c.Close()

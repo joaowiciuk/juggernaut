@@ -42,7 +42,7 @@ func (bm *BluetoothManager) Initialize(logPath string, database *DatabaseManager
 	bm.LogFile = f
 	bm.Logger = log.New(bm.LogFile, "", log.Ldate|log.Ltime)
 	if bm.Device == nil {
-		bm.Logger.Fatalf("BlueetoothManager#Initialize(): nil Device")
+		bm.Logger.Printf("BlueetoothManager#Initialize(): nil Device")
 	}
 	bm.Device.Handle(
 		gatt.CentralConnected(bm.OnConnect()),
