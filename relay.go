@@ -58,10 +58,10 @@ func (rm *RelayManager) Operate(relay Relay) {
 		rpioPin.Toggle()
 		rm.Logger.Printf("Toggle relay on pin %d.\n", relay.Pin)
 	case RelayOn:
-		rpioPin.Low()
+		rpioPin.High()
 		rm.Logger.Printf("Switch on relay on pin %d.\n", relay.Pin)
 	case RelayOff:
-		rpioPin.High()
+		rpioPin.Low()
 		rm.Logger.Printf("Switch off relay on pin %d.\n", relay.Pin)
 	default:
 		rpioPin.Toggle()
