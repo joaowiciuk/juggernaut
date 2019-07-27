@@ -73,6 +73,7 @@ func (t *TelemetryManager) ReadTemperature() float64 {
 }
 
 func (t *TelemetryManager) Communicate() {
+	defer t.Communicate()
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt)
 	environment := t.DatabaseManager.ReadEnvironment()
@@ -133,5 +134,4 @@ func (t *TelemetryManager) Communicate() {
 			isUp = false
 		}
 	}
-	t.Communicate()
 }
