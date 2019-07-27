@@ -34,7 +34,6 @@ func (t *TelemetryManager) Initialize(logPath string, database *DatabaseManager)
 	t.Logger = log.New(t.LogFile, "", log.Ldate|log.Ltime)
 	t.DatabaseManager = database
 	t.Logger.Printf("TelemetryManager started.\n")
-	go t.Communicate()
 	return nil
 }
 
@@ -73,6 +72,7 @@ func (t *TelemetryManager) ReadTemperature() float64 {
 }
 
 func (t *TelemetryManager) Communicate() {
+	t.Logger.Printf("TelemetryManager#Communicate(): Starting communication proccess...")
 	defer t.Communicate()
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt)
@@ -90,6 +90,7 @@ func (t *TelemetryManager) Communicate() {
 		t.Logger.Printf("TelemetryManager#Communicate(): dial: %v\n", err)
 		return
 	}
+	t.Logger.Printf("TelemetryManager#Communicate(): Communication proccess started succesfuly.")
 	defer c.Close()
 	done := make(chan struct{})
 	go func() {

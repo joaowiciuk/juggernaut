@@ -59,6 +59,7 @@ func main() {
 		log.Fatalf("main(): Initializing telemetryManager: %v\n", err)
 	}
 	defer telemetryManager.Finish()
+	go telemetryManager.Communicate()
 
 	http.ListenAndServe(":8181", wifiManager.Router)
 	log.Printf("main() finished.\n")
