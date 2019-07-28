@@ -4,8 +4,10 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
 
+	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	rpio "github.com/stianeikeland/go-rpio"
 )
@@ -97,4 +99,28 @@ func (rm *RelayManager) RelayHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		rm.Operate(relay)
 	}
+}
+
+func (rm *RelayManager) NoWebSocketRelayHandler(w http.ResponseWriter, r *http.Request) {
+	pinStr := mux.Vars(r)["pin"]
+	pin, _ := strconv.Atoi(pinStr)
+	relay := Relay{
+		Pin:     pin,
+		Command: RelayToggle,
+	}
+	rm.Logger.Printf("NoWebSocketRelayHandler: relay received: %v.\n", relay)
+	rm.Operate(relay)
+	w.WriteHeader(http.StatusOK)
+}
+
+func (rm *RelayManager) NoWebSocketInfraredHandler(w http.ResponseWriter, r *http.Request) {
+	pinStr := mux.Vars(r)["pin"]
+	pin, _ := strconv.Atoi(pinStr)
+	relay := Relay{
+		Pin:     pin,
+		Command: RelayToggle,
+	}
+	rm.Logger.Printf("NoWebSocketRelayHandler: relay received: %v.\n", relay)
+	rm.Operate(relay)
+	w.WriteHeader(http.StatusOK)
 }

@@ -52,6 +52,8 @@ func main() {
 	}
 	defer wifiManager.Finish()
 	wifiManager.AddHandler(relayManager.RelayHandler, "/api/relay", "GET")
+	wifiManager.AddHandler(relayManager.NoWebSocketRelayHandler, "/relay/{pin}", "GET")
+	wifiManager.AddHandler(relayManager.NoWebSocketInfraredHandler, "/infrared/{pin}", "GET")
 
 	//Inicialização telemetria
 	telemetryManager := NewTelemetryManager()
