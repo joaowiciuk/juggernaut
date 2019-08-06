@@ -115,7 +115,6 @@ func (c *ConfigurationManager) SSIDS() (ssids []SSID) {
 		//Filtra c saída do comando
 		re := regexp.MustCompile(`\|@\| (.*) \|@\| (.*) \|@\| (.*) \|@\|`)
 		c.Logger.Println("Output:")
-		c.Logger.Println(output)
 		submatches := re.FindAllStringSubmatch(output, -1)
 		for _, submatch := range submatches {
 			ssid := SSID{
@@ -123,6 +122,7 @@ func (c *ConfigurationManager) SSIDS() (ssids []SSID) {
 				Strength:   submatch[2],
 				Encryption: submatch[3],
 			}
+			c.Logger.Println(ssid)
 			ssids = append(ssids, ssid)
 		}
 
