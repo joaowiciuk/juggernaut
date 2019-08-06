@@ -124,6 +124,7 @@ func (c *ConfigurationManager) SSIDS() (ssids []SSID) {
 			ssids = append(ssids, ssid)
 		}
 	}
+	c.Logger.Printf("SSIDs: %s\n", ssids)
 	return ssids
 }
 
