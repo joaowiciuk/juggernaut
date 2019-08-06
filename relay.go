@@ -43,7 +43,7 @@ func (rm *RelayManager) Initialize(logPath string) (err error) {
 	return nil
 }
 
-func (rm *RelayManager) Finish() {
+func (rm *RelayManager) Close() {
 	rm.LogFile.Close()
 }
 

@@ -9,9 +9,9 @@ import (
 )
 
 type WifiManager struct {
-	LogFile  *os.File
-	Logger   *log.Logger
-	Router   *mux.Router
+	LogFile         *os.File
+	Logger          *log.Logger
+	Router          *mux.Router
 	DatabaseManager *DatabaseManager
 }
 
@@ -32,8 +32,8 @@ func (wm *WifiManager) Initialize(logPath string, database *DatabaseManager) (er
 	return nil
 }
 
-func (wm *WifiManager) Finish() {
-	wm.Logger.Printf("WifiManager finished.\n")
+func (wm *WifiManager) Close() {
+	wm.Logger.Printf("WifiManager closed.\n")
 	wm.LogFile.Close()
 }
 

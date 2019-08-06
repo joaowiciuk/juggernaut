@@ -37,8 +37,8 @@ func (t *TelemetryManager) Initialize(logPath string, database *DatabaseManager)
 	return nil
 }
 
-func (t *TelemetryManager) Finish() {
-	t.Logger.Printf("TelemetryManager finished.\n")
+func (t *TelemetryManager) Close() {
+	t.Logger.Printf("TelemetryManager closed.\n")
 	t.LogFile.Close()
 	t.Websocket.Close()
 }

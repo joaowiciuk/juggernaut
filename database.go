@@ -1,10 +1,12 @@
 package main
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
 	"os"
+	"reflect"
 	"regexp"
 
 	"github.com/boltdb/bolt"
@@ -12,7 +14,9 @@ import (
 
 const (
 	ConfigurationBucket = "config"
+	EquipmentBucket     = "equipment"
 
+	EquipmentsKey          = "equipments"
 	EnvironmentKey         = "environment"
 	EnvironmentDevelopment = "dev"
 	EnvironmentProduction  = "prod"
@@ -30,7 +34,7 @@ type DatabaseManager struct {
 	Logger  *log.Logger
 }
 
-func NewDatabase() *DatabaseManager {
+func NewDatabaseManager() *DatabaseManager {
 	return &DatabaseManager{}
 }
 
@@ -51,11 +55,11 @@ func (dm *DatabaseManager) Initialize(logPath string, kernelPath string, kernelF
 	return nil
 }
 
-func (dm *DatabaseManager) Finish() {
+func (dm *DatabaseManager) Close() {
 	if err := dm.kernel.Close(); err != nil {
 		dm.Logger.Printf("Erro: %v\n", err)
 	}
-	dm.Logger.Printf("DatabaseManager finished.\n")
+	dm.Logger.Printf("DatabaseManager closed.\n")
 	dm.LogFile.Close()
 }
 
@@ -178,4 +182,96 @@ func (dm *DatabaseManager) ReadUUID() (uuid string) {
 		return nil
 	})
 	return
+}
+
+func (dm *DatabaseManager) AddMonitoredEquipment(equipment Equipment) error {
+	if reflect.DeepEqual(equipment, Equipment{}) {
+		dm.Logger.Printf("DatabaseManager#UpdateIdentifier(): invalid equipment %s.\n", equipment)
+		return errors.New("invalid equipment")
+	}
+	externalError := dm.kernel.Update(func(tx *bolt.Tx) error {
+		bucket, internalError := tx.CreateBucketIfNotExists([]byte(EquipmentBucket))
+		if internalError != nil {
+			dm.Logger.Printf("DatabaseManager#UpdateIdentifier(): error creating bucket\n")
+			return fmt.Errorf("creating bucket: %s", internalError)
+		}
+		equipments := dm.ReadMonitoredEquipments()
+
+		//Calculates new ID
+		if len(equipments) == 0 {
+			equipment.ID = 1
+		} else {
+			equipment.ID = 0
+			for _, e := range equipments {
+				if e.ID >= equipment.ID {
+					equipment.ID = e.ID + 1
+				}
+			}
+		}
+
+		equipments = append(equipments, equipment)
+		source, err := json.Marshal(equipments)
+		if err != nil {
+			dm.Logger.Printf("adding monitored equipment: %v\n", err)
+		}
+		internalError = bucket.Put([]byte(EquipmentsKey), source)
+		return internalError
+	})
+	return externalError
+}
+
+func (dm *DatabaseManager) RemoveMonitoredEquipment(equipment Equipment) error {
+	if reflect.DeepEqual(equipment, Equipment{}) {
+		dm.Logger.Printf("DatabaseManager#UpdateIdentifier(): invalid equipment %s.\n", equipment)
+		return errors.New("invalid equipment")
+	}
+	externalError := dm.kernel.Update(func(tx *bolt.Tx) error {
+		bucket, internalError := tx.CreateBucketIfNotExists([]byte(EquipmentBucket))
+		if internalError != nil {
+			dm.Logger.Printf("DatabaseManager#UpdateIdentifier(): error creating bucket\n")
+			return fmt.Errorf("creating bucket: %s", internalError)
+		}
+		equipments := dm.ReadMonitoredEquipments()
+
+		var index int
+		found := false
+		for j, e := range equipments {
+			if e.ID == equipment.ID {
+				index = j
+				found = true
+			}
+		}
+		if found {
+			equipments[index] = equipments[len(equipments)-1]
+			equipments = equipments[:len(equipments)-1]
+		}
+
+		source, err := json.Marshal(equipments)
+		if err != nil {
+			dm.Logger.Printf("adding monitored equipment: %v\n", err)
+		}
+		internalError = bucket.Put([]byte(EquipmentsKey), source)
+		return internalError
+	})
+	return externalError
+}
+
+func (dm *DatabaseManager) ReadMonitoredEquipments() (equipments []Equipment) {
+	equipments = make([]Equipment, 0)
+	source := make([]byte, 0)
+	dm.kernel.View(func(tx *bolt.Tx) error {
+		bucket := tx.Bucket([]byte(EquipmentBucket))
+		if bucket != nil {
+			source = bucket.Get([]byte(EquipmentsKey))
+		}
+		return nil
+	})
+	if err := json.Unmarshal(source, equipments); err != nil {
+		dm.Logger.Printf("getting monitored equipments: %v\n", err)
+	}
+	return
+}
+
+func (dm *DatabaseManager) UpdateConfiguration(configuration Configuration) error {
+	return errors.New("TODO: Implement configuration persistence")
 }

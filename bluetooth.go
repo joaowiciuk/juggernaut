@@ -65,8 +65,8 @@ func (bm *BluetoothManager) Initialize(logPath string, database *DatabaseManager
 	return nil
 }
 
-func (bm *BluetoothManager) Finish() {
-	bm.Logger.Printf("BluetoothManager finished.\n")
+func (bm *BluetoothManager) Close() {
+	bm.Logger.Printf("BluetoothManager closed.\n")
 	bm.LogFile.Close()
 }
 
