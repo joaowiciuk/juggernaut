@@ -114,7 +114,6 @@ func (c *ConfigurationManager) SSIDS() (ssids []SSID) {
 
 		//Filtra c saída do comando
 		re := regexp.MustCompile(`\|@\| (.*) \|@\| (.*) \|@\| (.*) \|@\|`)
-		c.Logger.Println("Output:")
 		submatches := re.FindAllStringSubmatch(output, -1)
 		for _, submatch := range submatches {
 			ssid := SSID{
@@ -122,7 +121,6 @@ func (c *ConfigurationManager) SSIDS() (ssids []SSID) {
 				Strength:   submatch[2],
 				Encryption: submatch[3],
 			}
-			c.Logger.Println(ssid)
 			ssids = append(ssids, ssid)
 		}
 
@@ -140,14 +138,19 @@ func (c *ConfigurationManager) HandleSSIDSRequests() {
 		for !notifier.Done() {
 			ssids := c.SSIDS()
 
-			//Converte os SSIDs para uma string JSON codificada em base 64
-			source, _ := json.Marshal(ssids)
-			reader := bytes.NewReader(source)
-
 			//Registra todos os ssids encontrados
+			c.Logger.Println("SSIDS found:")
 			for _, ssid := range ssids {
 				c.Logger.Println(ssid)
 			}
+
+			//Converte os SSIDs para uma string JSON
+			source, err := json.Marshal(ssids)
+			if err != nil {
+				c.Logger.Printf("marshalling ssids: %v\n", err)
+				break
+			}
+			reader := bytes.NewReader(source)
 
 			//Buffer de transferência para enviar em pedaços
 			transf := make([]byte, 8)
