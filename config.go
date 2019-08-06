@@ -4,10 +4,12 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"os/exec"
 	"regexp"
+	"time"
 
 	"github.com/paypal/gatt"
 )
@@ -70,17 +72,13 @@ func (c *ConfigurationManager) ListenConfiguration() {
 			c.Logger.Printf("unmarshalling configuration: %v\n", err)
 			return gatt.StatusUnexpectedError
 		}
-		c.SaveConfiguration(configuration)
+		if err := c.DatabaseManager.UpdateConfiguration(configuration); err != nil {
+			c.Logger.Printf("saving configuration: %v\n", err)
+		}
+		c.Logger.Printf("Configuration succesfuly saved!\n")
 		return gatt.StatusSuccess
 	})
 	c.BluetoothManager.Device.SetServices([]*gatt.Service{s})
-}
-
-func (c *ConfigurationManager) SaveConfiguration(configuration Configuration) {
-	if err := c.DatabaseManager.UpdateConfiguration(configuration); err != nil {
-		c.Logger.Printf("saving configuration: %v\n", err)
-	}
-	c.Logger.Printf("Configuration succesfuly saved!\n")
 }
 
 func (c *ConfigurationManager) SSIDS() (ssids []SSID) {
@@ -129,17 +127,43 @@ func (c *ConfigurationManager) SSIDS() (ssids []SSID) {
 	return ssids
 }
 
-func (c *ConfigurationManager) SendSSID() {
+func (c *ConfigurationManager) HandleSSIDSRequests() {
 	s := c.BluetoothManager.Service()
 	characteristic := s.AddCharacteristic(gatt.MustParseUUID("4780e126-f320-4583-b2fd-dc9419e88aaf"))
-	characteristic.HandleWriteFunc(func(r gatt.Request, data []byte) (status byte) {
-		var configuration Configuration
-		if err := json.Unmarshal(data, &configuration); err != nil {
-			c.Logger.Printf("unmarshalling configuration: %v\n", err)
-			return gatt.StatusUnexpectedError
+	characteristic.HandleNotifyFunc(func(r gatt.Request, notifier gatt.Notifier) {
+		for !notifier.Done() {
+			ssids := c.SSIDS()
+
+			//Converte os SSIDs para uma string JSON codificada em base 64
+			source, _ := json.Marshal(ssids)
+			reader := bytes.NewReader(source)
+
+			//Registra todos os ssids encontrados
+			for _, ssid := range ssids {
+				c.Logger.Println(ssid)
+			}
+
+			//Buffer de transferência para enviar em pedaços
+			transf := make([]byte, 8)
+
+			//Inicia transferência mensagens do notifier
+			// >> IMPORTANTE: para esta característica são permitidos apenas 8 bytes por mensagem <<
+			for {
+				k, err := reader.Read(transf)
+				if err == io.EOF {
+					break
+				}
+
+				//registra o buffer de transferência
+				c.Logger.Printf("transf[:%d] = %q\n", k, transf[:k])
+
+				//envia o buffer de transferência pelo notifier
+				fmt.Fprintf(notifier, "%s", transf[:k])
+			}
+
+			//Intervalo para não estressar o dispositivo
+			time.Sleep(time.Second * 1)
 		}
-		c.SaveConfiguration(configuration)
-		return gatt.StatusSuccess
 	})
 	c.BluetoothManager.Device.SetServices([]*gatt.Service{s})
 }

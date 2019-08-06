@@ -51,6 +51,7 @@ func main() {
 		log.Fatalf("main(): Initializing configurationManager: %v\n", err)
 	}
 	configurationManager.ListenConfiguration()
+	configurationManager.HandleSSIDSRequests()
 	defer configurationManager.Close()
 
 	//wifiManager
