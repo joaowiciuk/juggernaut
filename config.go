@@ -124,10 +124,10 @@ func (c *ConfigurationManager) SSIDS() (ssids []SSID) {
 			ssids = append(ssids, ssid)
 		}
 
+		done = true
 		//Intervalo para não estressar o dispositivo
 		time.Sleep(time.Second * 1)
 	}
-	c.Logger.Printf("SSIDs: %s\n", ssids)
 	return ssids
 }
 
