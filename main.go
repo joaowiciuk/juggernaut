@@ -50,6 +50,7 @@ func main() {
 	if err := configurationManager.Initialize("configuration_log", databaseManager, bluetoothManager); err != nil {
 		log.Fatalf("main(): Initializing configurationManager: %v\n", err)
 	}
+	configurationManager.ListenConfiguration()
 	defer configurationManager.Close()
 
 	//wifiManager
