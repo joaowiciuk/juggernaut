@@ -86,7 +86,7 @@ func (c *ConfigurationManager) SSIDS() (ssids []SSID) {
 	ssids = make([]SSID, 0)
 	for !done {
 		//Comando para verificar redes wifi disponíveis
-		cmd := exec.Command("/bin/sh", "-c", "sudo iw dev wlan0 scan | awk -f ~/Scripts/wifi.awk")
+		cmd := exec.Command("/bin/sh", "-c", "sudo iw dev wlan0 scan | awk -f /home/pi/Scripts/wifi.awk")
 
 		//Saída padrão do comando
 		stdout, err := cmd.StdoutPipe()
@@ -114,6 +114,8 @@ func (c *ConfigurationManager) SSIDS() (ssids []SSID) {
 
 		//Filtra c saída do comando
 		re := regexp.MustCompile(`\|@\| (.*) \|@\| (.*) \|@\| (.*) \|@\|`)
+		c.Logger.Println("Output:")
+		c.Logger.Println(output)
 		submatches := re.FindAllStringSubmatch(output, -1)
 		for _, submatch := range submatches {
 			ssid := SSID{
