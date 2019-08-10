@@ -81,6 +81,7 @@ func (t *TelemetryManager) Communicate() {
 			_, message, err := c.ReadMessage()
 			if err != nil {
 				t.Logger.Println("Ao receber mensagem: ", err)
+				time.Sleep(15 * time.Second)
 				return
 			}
 			t.Logger.Printf("Recebido: %s", message)
@@ -112,6 +113,7 @@ func (t *TelemetryManager) Communicate() {
 			if err != nil {
 				t.Logger.Printf("writing JSON: %v\n", err)
 				isUp = false
+				time.Sleep(15 * time.Second)
 			}
 		case <-interrupt:
 			isUp = false
