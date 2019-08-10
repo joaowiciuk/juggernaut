@@ -65,10 +65,11 @@ func (t *TelemetryManager) Communicate() {
 		host = "http://solutech.site"
 	}
 	u := url.URL{Scheme: "ws", Host: host, Path: "/shc/telemetria"}
-	log.Printf("connecting to %s", u.String())
+	t.Logger.Printf("connecting to %s", u.String())
 	c, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
 	if err != nil {
-		t.Logger.Printf("TelemetryManager#Communicate(): dial: %v\n", err)
+		t.Logger.Printf("communicating: %v\n", err)
+		time.Sleep(15 * time.Second)
 		return
 	}
 	t.Logger.Printf("TelemetryManager#Communicate(): Communication proccess started succesfuly.")
