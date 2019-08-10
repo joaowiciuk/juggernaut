@@ -94,12 +94,6 @@ func (bm *BluetoothManager) Service() *gatt.Service {
 		fmt.Fprintf(rsp, "%.2f", bm.DeviceManager.Temperature())
 		rsp.SetStatus(gatt.StatusSuccess)
 	})
-	temperature.HandleNotifyFunc(func(r gatt.Request, notifier gatt.Notifier) {
-		for !notifier.Done() {
-			fmt.Fprintf(notifier, "%.2f", bm.DeviceManager.Temperature())
-			time.Sleep(5 * time.Second)
-		}
-	})
 
 	wifi := s.AddCharacteristic(gatt.MustParseUUID("351e784a-4099-405e-8031-e4b473e668a4"))
 	wifi.HandleNotifyFunc(func(r gatt.Request, notifier gatt.Notifier) {
