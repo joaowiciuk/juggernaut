@@ -92,6 +92,7 @@ func (bm *BluetoothManager) Service() *gatt.Service {
 	temperature := s.AddCharacteristic(gatt.MustParseUUID("aee5af4f-d1a8-4855-b770-b912519327d6"))
 	temperature.HandleReadFunc(func(rsp gatt.ResponseWriter, req *gatt.ReadRequest) {
 		fmt.Fprintf(rsp, "%.2f", bm.DeviceManager.Temperature())
+		rsp.SetStatus(gatt.StatusSuccess)
 	})
 	temperature.HandleNotifyFunc(func(r gatt.Request, notifier gatt.Notifier) {
 		for !notifier.Done() {
