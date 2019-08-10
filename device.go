@@ -85,7 +85,7 @@ func (d *DeviceManager) Wifis() (wifis []Wifi) {
 	wifis = make([]Wifi, 0)
 	for !done {
 		//Comando para verificar redes wifi disponíveis
-		cmd := exec.Command("/bin/sh", "-d", "sudo iw dev wlan0 scan | awk -f /home/pi/Scripts/wifi.awk")
+		cmd := exec.Command("/bin/sh", "-c", "sudo iw dev wlan0 scan | awk -f /home/pi/Scripts/wifi.awk")
 
 		//Saída padrão do comando
 		stdout, err := cmd.StdoutPipe()
