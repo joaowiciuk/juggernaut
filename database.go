@@ -21,7 +21,7 @@ func NewDatabaseManager() *DatabaseManager {
 	return &DatabaseManager{}
 }
 
-func (dm *DatabaseManager) Initialize(logPath string, dbName string) error {
+func (dm *DatabaseManager) Initialize(logPath string, env string) error {
 	f, err := os.OpenFile(logPath, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0666)
 	if err != nil {
 		return err
@@ -29,7 +29,7 @@ func (dm *DatabaseManager) Initialize(logPath string, dbName string) error {
 	dm.LogFile = f
 	dm.Logger = log.New(dm.LogFile, "", log.Ldate|log.Ltime)
 
-	dm.Kernel = dm.Open(dm.URL(dbName))
+	dm.Kernel = dm.Open(dm.URL(env))
 	dm.Logger.Printf("DatabaseManager started.\n")
 	return nil
 }

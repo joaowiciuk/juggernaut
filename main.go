@@ -9,7 +9,7 @@ import (
 var logFile *os.File
 
 func init() {
-	logFile, err := os.OpenFile("main_log", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0666)
+	logFile, err := os.OpenFile("log/main", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0666)
 	if err != nil {
 		log.Fatalf("opening log file: %v", err)
 	}
@@ -37,7 +37,7 @@ func main() {
 
 	//Inicialização do banco de dados
 	databaseManager := NewDatabaseManager()
-	if err := databaseManager.Initialize("log/database", "cyttorak"); err != nil {
+	if err := databaseManager.Initialize("log/database", "DATABASE"); err != nil {
 		log.Fatalf("main(): Initializing databaseManager: %v\n", err)
 	}
 	defer databaseManager.Close()
