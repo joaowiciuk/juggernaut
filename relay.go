@@ -12,6 +12,10 @@ import (
 	rpio "github.com/stianeikeland/go-rpio"
 )
 
+//	DEPRECATED
+//	Responsibilities:
+//	*	To handle relay operation via Wifi - HTTP
+//	RelayManager
 type RelayManager struct {
 	LogFile *os.File
 	Logger  *log.Logger

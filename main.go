@@ -4,9 +4,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"time"
-
-	"github.com/boltdb/bolt"
 )
 
 var logFile *os.File
@@ -24,53 +21,56 @@ func main() {
 	log.Printf("main() started.\n")
 	defer logFile.Close()
 
+	//SecurityManager
+	securityManager := NewSecurityManager()
+	if err := securityManager.Initialize("log/security"); err != nil {
+		log.Fatalf("main(): Initializing securityManager: %v\n", err)
+	}
+	defer securityManager.Close()
+
+	//deviceManager
+	deviceManager := NewDeviceManager()
+	if err := deviceManager.Initialize("log/configuration"); err != nil {
+		log.Fatalf("main(): Initializing deviceManager: %v\n", err)
+	}
+	defer deviceManager.Close()
+
 	//Inicialização do banco de dados
 	databaseManager := NewDatabaseManager()
-	if err := databaseManager.Initialize("database_log", "database.db", 0600, &bolt.Options{Timeout: 1 * time.Second}); err != nil {
-		log.Fatalf("main(): Initializing database: %v\n", err)
+	if err := databaseManager.Initialize("log/database", "cyttorak"); err != nil {
+		log.Fatalf("main(): Initializing databaseManager: %v\n", err)
 	}
 	defer databaseManager.Close()
 
-	//RelayManager
-	relayManager := NewRelayManager()
-	if err := relayManager.Initialize("relay_log"); err != nil {
-		log.Fatalf("main(): Initializing relayManager: %v\n", err)
+	//EquipmentManager
+	equipmentManager := NewEquipmentManager()
+	if err := equipmentManager.Initialize("log/equipment", databaseManager); err != nil {
+		log.Fatalf("main(): Initializing equipmentManager: %v\n", err)
 	}
-	defer relayManager.Close()
-
-	//bluetoothManager
-	bluetoothManager := NewBluetoothManager()
-	if err := bluetoothManager.Initialize("bluetooth_log", databaseManager); err != nil {
-		log.Fatalf("main(): Initializing bluetoothManager: %v\n", err)
-	}
-	defer bluetoothManager.Close()
-
-	//configurationManager
-	configurationManager := NewConfigurationManager()
-	if err := configurationManager.Initialize("configuration_log", databaseManager, bluetoothManager); err != nil {
-		log.Fatalf("main(): Initializing configurationManager: %v\n", err)
-	}
-	configurationManager.ListenConfiguration()
-	configurationManager.HandleSSIDSRequests()
-	defer configurationManager.Close()
+	defer equipmentManager.Close()
 
 	//wifiManager
 	wifiManager := NewWifiManager()
-	if err := wifiManager.Initialize("wifi_log", databaseManager); err != nil {
+	if err := wifiManager.Initialize("log/wifi", databaseManager); err != nil {
 		log.Fatalf("main(): Initializing wifiManager: %v\n", err)
 	}
 	defer wifiManager.Close()
-	wifiManager.AddHandler(relayManager.RelayHandler, "/api/relay", "GET")
-	wifiManager.AddHandler(relayManager.NoWebSocketRelayHandler, "/relay/{pin}", "GET")
-	wifiManager.AddHandler(relayManager.NoWebSocketInfraredHandler, "/infrared/{pin}", "GET")
+	wifiManager.AddHandler(equipmentManager.OperationHandler, "/equipment/{command}", "POST")
 
 	//Inicialização telemetria
 	telemetryManager := NewTelemetryManager()
-	if err := telemetryManager.Initialize("telemetry_log", databaseManager); err != nil {
+	if err := telemetryManager.Initialize("log/telemetry", databaseManager, deviceManager); err != nil {
 		log.Fatalf("main(): Initializing telemetryManager: %v\n", err)
 	}
 	defer telemetryManager.Close()
 	go telemetryManager.Communicate()
+
+	//bluetoothManager
+	bluetoothManager := NewBluetoothManager()
+	if err := bluetoothManager.Initialize("log/bluetooth", databaseManager, deviceManager, securityManager); err != nil {
+		log.Fatalf("main(): Initializing bluetoothManager: %v\n", err)
+	}
+	defer bluetoothManager.Close()
 
 	http.ListenAndServe(":8181", wifiManager.Router)
 	log.Printf("main() finished.\n")

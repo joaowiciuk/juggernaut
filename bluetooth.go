@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -17,11 +16,16 @@ import (
 	"github.com/paypal/gatt/examples/option"
 )
 
+//	Responsabilities:
+//	*	To send and to receive anything related to the device and device configuration
+//	BlueetoothManager
 type BluetoothManager struct {
-	LogFile         *os.File
-	Logger          *log.Logger
-	Device          gatt.Device
-	DatabaseManager *DatabaseManager
+	LogFile *os.File
+	Logger  *log.Logger
+	Device  gatt.Device
+	*DatabaseManager
+	*DeviceManager
+	*SecurityManager
 }
 
 func NewBluetoothManager() (bm *BluetoothManager) {
@@ -34,7 +38,8 @@ func NewBluetoothManager() (bm *BluetoothManager) {
 	}
 }
 
-func (bm *BluetoothManager) Initialize(logPath string, database *DatabaseManager) error {
+func (bm *BluetoothManager) Initialize(logPath string, database *DatabaseManager,
+	deviceManager *DeviceManager, security *SecurityManager) error {
 	f, err := os.OpenFile(logPath, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0666)
 	if err != nil {
 		return err
@@ -61,6 +66,8 @@ func (bm *BluetoothManager) Initialize(logPath string, database *DatabaseManager
 	}
 	bm.Device.Init(onStateChanged)
 	bm.DatabaseManager = database
+	bm.DeviceManager = deviceManager
+	bm.SecurityManager = security
 	bm.Logger.Printf("BluetoothManager started.\n")
 	return nil
 }
@@ -85,12 +92,10 @@ func (bm *BluetoothManager) OnDisconnect() (f func(gatt.Central)) {
 func (bm *BluetoothManager) Service() *gatt.Service {
 	s := gatt.NewService(gatt.UUID16(0x1815))
 
-	ssidRequested := false
-
-	readTemperature := s.AddCharacteristic(gatt.MustParseUUID("aee5af4f-d1a8-4855-b770-b912519327d6"))
-	readTemperature.HandleReadFunc(func(rsp gatt.ResponseWriter, req *gatt.ReadRequest) {
-		pending := true
-		for pending {
+	temperature := s.AddCharacteristic(gatt.MustParseUUID("aee5af4f-d1a8-4855-b770-b912519327d6"))
+	temperature.HandleReadFunc(func(rsp gatt.ResponseWriter, req *gatt.ReadRequest) {
+		done := false
+		for !done {
 			cmd := exec.Command("/bin/sh", "-c", "vcgencmd measure_temp")
 			stdout, err := cmd.StdoutPipe()
 			if err != nil {
@@ -116,177 +121,92 @@ func (bm *BluetoothManager) Service() *gatt.Service {
 				break
 			}
 			fmt.Fprintf(rsp, "%f", temp)
-			pending = false
+			done = true
+			time.Sleep(time.Second * 5)
 		}
-		time.Sleep(time.Second * 1)
 	})
 
-	requestSSID := s.AddCharacteristic(gatt.MustParseUUID("351e784a-4099-405e-8031-e4b473e668a4"))
-	requestSSID.HandleWriteFunc(func(r gatt.Request, data []byte) (status byte) {
-		if len(data) == 1 && data[0] == 0x79 {
-			ssidRequested = true
-		} else {
-			ssidRequested = false
-		}
-		return gatt.StatusSuccess
-	})
-
-	notifySSID := s.AddCharacteristic(gatt.MustParseUUID("34a97fc8-5118-4484-b022-0c8a467cd533"))
-	notifySSID.HandleNotifyFunc(func(r gatt.Request, notifier gatt.Notifier) {
+	wifi := s.AddCharacteristic(gatt.MustParseUUID("351e784a-4099-405e-8031-e4b473e668a4"))
+	wifi.HandleNotifyFunc(func(r gatt.Request, notifier gatt.Notifier) {
 		for !notifier.Done() {
-			for ssidRequested {
-				//Comando para verificar redes wifi disponíveis
-				cmd := exec.Command("/bin/sh", "-c", "sudo iw dev wlan0 scan | grep SSID")
+			wifi := bm.DeviceManager.Wifi()
 
-				//Saída padrão do comando
-				stdout, err := cmd.StdoutPipe()
-				if err != nil {
-					bm.Logger.Println(err)
-					break
-				}
-
-				//Inicia o comando porém não aguarda finalização
-				if err := cmd.Start(); err != nil {
-					bm.Logger.Println(err)
-					break
-				}
-
-				//Converte bm saída do comando para string
-				buf := new(bytes.Buffer)
-				buf.ReadFrom(stdout)
-				output := buf.String()
-
-				//Aguarda até que o comando finalize
-				if err := cmd.Wait(); err != nil {
-					bm.Logger.Println(err)
-					break
-				}
-
-				//Filtra bm saída do comando
-				re := regexp.MustCompile(`\ *SSID:\ (.*)`)
-				submatches := re.FindAllStringSubmatch(output, -1)
-				type SSID struct {
-					Lista []string `json:"ssids"`
-				}
-				ssid := SSID{
-					Lista: make([]string, 0),
-				}
-				for _, submatch := range submatches {
-					ssid.Lista = append(ssid.Lista, submatch[1])
-				}
-
-				//Nenhum SSID encontrado
-				if len(ssid.Lista) == 0 {
-					bm.Logger.Printf("BluetoothManager#Service(): No SSID found.\n")
-					ssidRequested = false
-					return
-				}
-
-				//Converte os SSIDs para uma string JSON codificada em base 64
-				src, err := json.Marshal(ssid)
-				if err != nil {
-					bm.Logger.Printf("BluetoothManager#Service(): %v\n", err)
-					ssidRequested = false
-					return
-				}
-				size := ((4 * len(src) / 3) + 3) & ^3
-				dst := make([]byte, size)
-				base64.StdEncoding.Encode(dst, src)
-				reader := bytes.NewReader(dst)
-
-				//Registra todos os ssids encontrados
-				for i, s := range ssid.Lista {
-					bm.Logger.Printf("BluetoothManager#Service(): SSID[%d] = %s\n", i, s)
-				}
-
-				//Buffer de transferência para enviar em pedaços
-				transf := make([]byte, 8)
-
-				//Inicia bm transferência de ssidSource por mensagens do notifier
-				// >> IMPORTANTE: para esta característica são permitidos apenas 8 bytes por mensagem <<
-				for {
-					k, err := reader.Read(transf)
-					if err == io.EOF {
-						ssidRequested = false
-						break
-					}
-
-					//registra o buffer de transferência
-					bm.Logger.Printf("transf[:%d] = %q\n", k, transf[:k])
-
-					//envia o buffer de transferência pelo notifier
-					fmt.Fprintf(notifier, "%s", transf[:k])
-				}
+			//Registra todos os wifi encontrados
+			bm.Logger.Println("Wifi found:")
+			for _, wifi := range wifi {
+				bm.Logger.Println(wifi)
 			}
+
+			//Converte os Wifis para uma string JSON
+			source, err := json.Marshal(wifi)
+			if err != nil {
+				bm.Logger.Printf("marshalling wifi: %v\n", err)
+				break
+			}
+			reader := bytes.NewReader(source)
+
+			//Buffer de transferência para enviar em pedaços
+			transf := make([]byte, 8)
+
+			//Inicia transferência mensagens do notifier
+			// >> IMPORTANTE: para esta característica são permitidos apenas 8 bytes por mensagem <<
+			for {
+				k, err := reader.Read(transf)
+				if err == io.EOF {
+					break
+				}
+
+				//registra o buffer de transferência
+				bm.Logger.Printf("transf[:%d] = %q\n", k, transf[:k])
+
+				//envia o buffer de transferência pelo notifier
+				fmt.Fprintf(notifier, "%s", transf[:k])
+			}
+
 			//Intervalo para não estressar o dispositivo
-			time.Sleep(time.Second * 1)
+			time.Sleep(1750 * time.Millisecond)
 		}
 	})
 
-	readEnvironment := s.AddCharacteristic(gatt.MustParseUUID("ff39ae7e-61b6-4f67-af74-324e7af948bd"))
-	readEnvironment.HandleReadFunc(func(rsp gatt.ResponseWriter, req *gatt.ReadRequest) {
-		environment := bm.DatabaseManager.ReadEnvironment()
-		rsp.SetStatus(gatt.StatusSuccess)
-		fmt.Fprintf(rsp, "%s", environment)
-	})
-
-	writeEnvironment := s.AddCharacteristic(gatt.MustParseUUID("2f54b94a-a6fe-4d5f-a4ca-932a362eba10"))
-	writeEnvironment.HandleWriteFunc(func(r gatt.Request, data []byte) (status byte) {
-		environment := string(data)
-		bm.DatabaseManager.UpdateEnvironment(environment)
+	device := s.AddCharacteristic(gatt.MustParseUUID("cb62a27b-c0fe-4003-a24b-4577ed4a697e"))
+	device.HandleWriteFunc(func(r gatt.Request, data []byte) (status byte) {
+		var device Device
+		if err := json.Unmarshal(data, &device); err != nil {
+			bm.Logger.Printf("unmarshalling device %v\n", err)
+			return gatt.StatusUnexpectedError
+		}
+		bm.DatabaseManager.UpdateDevice(device)
 		return gatt.StatusSuccess
 	})
+	device.HandleNotifyFunc(func(r gatt.Request, notifier gatt.Notifier) {
+		for !notifier.Done() {
+			device := bm.DatabaseManager.ReadDevice()
 
-	readIP := s.AddCharacteristic(gatt.MustParseUUID("02e9a221-8643-451e-ad92-deeec489c44b"))
-	readIP.HandleReadFunc(func(rsp gatt.ResponseWriter, req *gatt.ReadRequest) {
-		ip := bm.DatabaseManager.ReadIP()
-		rsp.SetStatus(gatt.StatusSuccess)
-		fmt.Fprintf(rsp, "%s", ip)
-	})
+			bm.Logger.Println("Device read:")
+			bm.Logger.Println(device)
 
-	writeIP := s.AddCharacteristic(gatt.MustParseUUID("92e6b940-1ed5-43fb-b942-6ac51ad5d72d"))
-	writeIP.HandleWriteFunc(func(r gatt.Request, data []byte) (status byte) {
-		ip := string(data)
-		bm.DatabaseManager.UpdateIP(ip)
-		return gatt.StatusSuccess
-	})
+			source, err := json.Marshal(device)
+			if err != nil {
+				bm.Logger.Printf("marshalling device: %v\n", err)
+				break
+			}
+			reader := bytes.NewReader(source)
 
-	readIdentifier := s.AddCharacteristic(gatt.MustParseUUID("55cc9c0d-d42d-4f0f-850c-00b1809007e7"))
-	readIdentifier.HandleReadFunc(func(rsp gatt.ResponseWriter, req *gatt.ReadRequest) {
-		identifier := bm.DatabaseManager.ReadIdentifier()
-		if identifier == "" {
-			fmt.Fprint(rsp, "undefined")
-		} else {
-			fmt.Fprintf(rsp, "%s", identifier)
+			transf := make([]byte, 8)
+
+			for {
+				k, err := reader.Read(transf)
+				if err == io.EOF {
+					break
+				}
+
+				bm.Logger.Printf("transf[:%d] = %q\n", k, transf[:k])
+
+				fmt.Fprintf(notifier, "%s", transf[:k])
+			}
+
+			time.Sleep(1750 * time.Millisecond)
 		}
-	})
-
-	writeIdentifier := s.AddCharacteristic(gatt.MustParseUUID("cde083d8-b20c-4709-b756-2f219a911994"))
-	writeIdentifier.HandleWriteFunc(func(r gatt.Request, data []byte) (status byte) {
-		if bm.DatabaseManager.ReadIdentifier() == "" {
-			identifier := string(data)
-			bm.DatabaseManager.UpdateIdentifier(identifier)
-		}
-		return gatt.StatusSuccess
-	})
-
-	readUUID := s.AddCharacteristic(gatt.MustParseUUID("061e21d7-75bd-48fe-b0d5-b6237ef833c7"))
-	readUUID.HandleReadFunc(func(rsp gatt.ResponseWriter, req *gatt.ReadRequest) {
-		uuid := bm.DatabaseManager.ReadUUID()
-		if uuid == "" {
-			fmt.Fprint(rsp, "undefined")
-		} else {
-			fmt.Fprintf(rsp, "%s", uuid)
-		}
-	})
-
-	writeUUID := s.AddCharacteristic(gatt.MustParseUUID("ecb2b207-78ab-44e1-a55e-dab0c6d4bf73"))
-	writeUUID.HandleWriteFunc(func(r gatt.Request, data []byte) (status byte) {
-		if bm.DatabaseManager.ReadUUID() == "" {
-			uuid := string(data)
-			bm.DatabaseManager.UpdateUUID(uuid)
-		}
-		return gatt.StatusSuccess
 	})
 
 	return s

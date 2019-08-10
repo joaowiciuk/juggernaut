@@ -5,16 +5,23 @@ import (
 	"os"
 )
 
+//	Abstract responsibilities:
+//	*	To refuse non authorized equipment and infrared operations
+//	*	To refuse non authorized device configuration
+//	Concrete responsibilities:
+//	*	To manipulate a role system
+//	*	To generate and check tokens
+//	SecurityManager
 type SecurityManager struct {
 	LogFile *os.File
 	Logger  *log.Logger
 }
 
-func NewSecurityManager() SecurityManager {
-	return SecurityManager{}
+func NewSecurityManager() *SecurityManager {
+	return &SecurityManager{}
 }
 
-func (s *SecurityManager) Initialize(logPath string, database *DatabaseManager, bluetooth *BluetoothManager) (err error) {
+func (s *SecurityManager) Initialize(logPath string) (err error) {
 	f, err := os.OpenFile(logPath, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0666)
 	if err != nil {
 		return err

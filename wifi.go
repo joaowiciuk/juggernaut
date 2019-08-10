@@ -8,6 +8,9 @@ import (
 	"github.com/gorilla/mux"
 )
 
+//	Responsibilities:
+//	*	To register system's Wifi - HTTP endpoints
+//	WifiManager
 type WifiManager struct {
 	LogFile         *os.File
 	Logger          *log.Logger

@@ -5,6 +5,9 @@ import (
 	"os"
 )
 
+//	Responsibilities:
+//	*	To schedule future equipment and infrared operations
+//	ScheduleManager
 type ScheduleManager struct {
 	DatabaseManager *DatabaseManager
 	LogFile         *os.File
