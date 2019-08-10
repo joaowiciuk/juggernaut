@@ -122,8 +122,6 @@ func (bm *BluetoothManager) Service() *gatt.Service {
 			//Buffer de transferência para enviar em pedaços
 			transf := make([]byte, 8)
 
-			//Inicia transferência mensagens do notifier
-			// >> IMPORTANTE: para esta característica são permitidos apenas 8 bytes por mensagem <<
 			for {
 				k, err := reader.Read(transf)
 				if err == io.EOF {

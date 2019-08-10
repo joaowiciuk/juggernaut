@@ -90,14 +90,16 @@ func (d *DeviceManager) Wifis() (wifis []Wifi) {
 		//Saída padrão do comando
 		stdout, err := cmd.StdoutPipe()
 		if err != nil {
-			d.Logger.Println(err)
-			break
+			d.Logger.Printf("wifi: getting stdout: %v\n", err)
+			time.Sleep(time.Second * 1)
+			continue
 		}
 
 		//Inicia o comando porém não aguarda finalização
 		if err := cmd.Start(); err != nil {
-			d.Logger.Println(err)
-			break
+			d.Logger.Printf("wifi: starting command: %v\n", err)
+			time.Sleep(time.Second * 1)
+			continue
 		}
 
 		//Converte d saída do comando para string
@@ -108,8 +110,9 @@ func (d *DeviceManager) Wifis() (wifis []Wifi) {
 
 		//Aguarda até que o comando finalize
 		if err := cmd.Wait(); err != nil {
-			d.Logger.Println(err)
-			break
+			d.Logger.Printf("wifi: finishing command: %v\n", err)
+			time.Sleep(time.Second * 1)
+			continue
 		}
 
 		//Filtra d saída do comando
@@ -125,8 +128,6 @@ func (d *DeviceManager) Wifis() (wifis []Wifi) {
 		}
 
 		done = true
-		//Intervalo para não estressar o dispositivo
-		time.Sleep(time.Second * 1)
 	}
 	return wifis
 }
