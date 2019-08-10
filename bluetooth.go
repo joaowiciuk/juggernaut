@@ -7,9 +7,6 @@ import (
 	"io"
 	"log"
 	"os"
-	"os/exec"
-	"regexp"
-	"strconv"
 	"time"
 
 	"github.com/paypal/gatt"
@@ -94,35 +91,12 @@ func (bm *BluetoothManager) Service() *gatt.Service {
 
 	temperature := s.AddCharacteristic(gatt.MustParseUUID("aee5af4f-d1a8-4855-b770-b912519327d6"))
 	temperature.HandleReadFunc(func(rsp gatt.ResponseWriter, req *gatt.ReadRequest) {
-		done := false
-		for !done {
-			cmd := exec.Command("/bin/sh", "-c", "vcgencmd measure_temp")
-			stdout, err := cmd.StdoutPipe()
-			if err != nil {
-				bm.Logger.Println(err)
-				break
-			}
-			if err := cmd.Start(); err != nil {
-				bm.Logger.Println(err)
-				break
-			}
-			buf := new(bytes.Buffer)
-			buf.ReadFrom(stdout)
-			output := buf.String()
-			if err := cmd.Wait(); err != nil {
-				bm.Logger.Println(err)
-				break
-			}
-			re := regexp.MustCompile(`temp=(.*)'C`)
-			submatches := re.FindAllStringSubmatch(output, -1)
-			temp, err := strconv.ParseFloat(submatches[0][1], 64)
-			if err != nil {
-				bm.Logger.Println(err)
-				break
-			}
-			fmt.Fprintf(rsp, "%f", temp)
-			done = true
-			time.Sleep(time.Second * 5)
+		fmt.Fprintf(rsp, "%.2f", bm.DeviceManager.Temperature())
+	})
+	temperature.HandleNotifyFunc(func(r gatt.Request, notifier gatt.Notifier) {
+		for !notifier.Done() {
+			fmt.Fprintf(notifier, "%.2f", bm.DeviceManager.Temperature())
+			time.Sleep(5 * time.Second)
 		}
 	})
 
