@@ -131,29 +131,38 @@ func (d *DeviceManager) Wifi() (wifis []Wifi) {
 }
 
 func (d *DeviceManager) Temperature() float64 {
-	cmd := exec.Command("/bin/sh", "-d", "vcgencmd measure_temp")
-	stdout, err := cmd.StdoutPipe()
-	if err != nil {
-		d.Logger.Println(err)
-		return 0
+	done := false
+	var temp float64
+	for !done {
+		cmd := exec.Command("/bin/sh", "-c", "vcgencmd measure_temp")
+		stdout, err := cmd.StdoutPipe()
+		if err != nil {
+			d.Logger.Println(err)
+			time.Sleep(time.Second * 5)
+			continue
+		}
+		if err := cmd.Start(); err != nil {
+			d.Logger.Println(err)
+			time.Sleep(time.Second * 5)
+			continue
+		}
+		buf := new(bytes.Buffer)
+		buf.ReadFrom(stdout)
+		output := buf.String()
+		if err := cmd.Wait(); err != nil {
+			d.Logger.Println(err)
+			time.Sleep(time.Second * 5)
+			continue
+		}
+		re := regexp.MustCompile(`temp=(.*)'C`)
+		submatches := re.FindAllStringSubmatch(output, -1)
+		temp, err = strconv.ParseFloat(submatches[0][1], 64)
+		if err != nil {
+			d.Logger.Println(err)
+			time.Sleep(time.Second * 5)
+			continue
+		}
+		done = true
 	}
-	if err := cmd.Start(); err != nil {
-		d.Logger.Println(err)
-		return 0
-	}
-	buf := new(bytes.Buffer)
-	buf.ReadFrom(stdout)
-	output := buf.String()
-	if err := cmd.Wait(); err != nil {
-		d.Logger.Println(err)
-		return 0
-	}
-	re := regexp.MustCompile(`temp=(.*)'C`)
-	submatches := re.FindAllStringSubmatch(output, -1)
-	value, err := strconv.ParseFloat(submatches[0][1], 64)
-	if err != nil {
-		d.Logger.Println(err)
-		return 0
-	}
-	return value
+	return temp
 }
