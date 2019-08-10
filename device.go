@@ -104,6 +104,7 @@ func (d *DeviceManager) Wifi() (wifis []Wifi) {
 		buf := new(bytes.Buffer)
 		buf.ReadFrom(stdout)
 		output := buf.String()
+		d.Logger.Printf("Output: %s\n", output)
 
 		//Aguarda até que o comando finalize
 		if err := cmd.Wait(); err != nil {
