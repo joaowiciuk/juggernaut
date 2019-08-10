@@ -103,18 +103,18 @@ func (bm *BluetoothManager) Service() *gatt.Service {
 	wifi := s.AddCharacteristic(gatt.MustParseUUID("351e784a-4099-405e-8031-e4b473e668a4"))
 	wifi.HandleNotifyFunc(func(r gatt.Request, notifier gatt.Notifier) {
 		for !notifier.Done() {
-			wifi := bm.DeviceManager.Wifi()
+			wifis := bm.DeviceManager.Wifis()
 
 			//Registra todos os wifi encontrados
 			bm.Logger.Println("Wifi found:")
-			for _, wifi := range wifi {
+			for _, wifi := range wifis {
 				bm.Logger.Println(wifi)
 			}
 
 			//Converte os Wifis para uma string JSON
-			source, err := json.Marshal(wifi)
+			source, err := json.Marshal(wifis)
 			if err != nil {
-				bm.Logger.Printf("marshalling wifi: %v\n", err)
+				bm.Logger.Printf("marshalling wifis: %v\n", err)
 				break
 			}
 			reader := bytes.NewReader(source)

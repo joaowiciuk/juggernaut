@@ -30,7 +30,7 @@ func main() {
 
 	//deviceManager
 	deviceManager := NewDeviceManager()
-	if err := deviceManager.Initialize("log/configuration"); err != nil {
+	if err := deviceManager.Initialize("log/device"); err != nil {
 		log.Fatalf("main(): Initializing deviceManager: %v\n", err)
 	}
 	defer deviceManager.Close()

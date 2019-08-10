@@ -80,7 +80,7 @@ func (d *DeviceManager) Close() {
 	d.LogFile.Close()
 }
 
-func (d *DeviceManager) Wifi() (wifis []Wifi) {
+func (d *DeviceManager) Wifis() (wifis []Wifi) {
 	done := false
 	wifis = make([]Wifi, 0)
 	for !done {
