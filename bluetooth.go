@@ -105,6 +105,10 @@ func (bm *BluetoothManager) Service() *gatt.Service {
 		for !notifier.Done() {
 			wifis := bm.DeviceManager.Wifis()
 
+			if len(wifis) == 0 {
+				continue
+			}
+
 			//Registra todos os wifi encontrados
 			bm.Logger.Println("Wifi found:")
 			for _, wifi := range wifis {
@@ -115,7 +119,7 @@ func (bm *BluetoothManager) Service() *gatt.Service {
 			source, err := json.Marshal(wifis)
 			if err != nil {
 				bm.Logger.Printf("marshalling wifis: %v\n", err)
-				break
+				continue
 			}
 			reader := bytes.NewReader(source)
 
@@ -135,8 +139,7 @@ func (bm *BluetoothManager) Service() *gatt.Service {
 				fmt.Fprintf(notifier, "%s", transf[:k])
 			}
 
-			//Intervalo para não estressar o dispositivo
-			time.Sleep(1750 * time.Millisecond)
+			return
 		}
 	})
 
