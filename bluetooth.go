@@ -8,6 +8,7 @@ import (
 	"log"
 	"os"
 	"time"
+	"strings"
 
 	"github.com/paypal/gatt"
 	"github.com/paypal/gatt/examples/option"
@@ -100,9 +101,21 @@ func (bm *BluetoothManager) Service() *gatt.Service {
 		}
 	})
 
+	readWifi := false
 	wifi := s.AddCharacteristic(gatt.MustParseUUID("351e784a-4099-405e-8031-e4b473e668a4"))
+	wifi.HandleWriteFunc(func(r gatt.Request, data []byte) (status byte) {
+		if strings.ToLower(string(data)) == "readwifi" {
+			readWifi = true
+		}
+		return gatt.StatusSuccess
+	})
 	wifi.HandleNotifyFunc(func(r gatt.Request, notifier gatt.Notifier) {
 		for !notifier.Done() {
+
+			if !readWifi {
+				continue
+			}
+
 			wifis := bm.DeviceManager.Wifis()
 
 			if len(wifis) == 0 {
@@ -138,8 +151,6 @@ func (bm *BluetoothManager) Service() *gatt.Service {
 				//envia o buffer de transferência pelo notifier
 				fmt.Fprintf(notifier, "%s", transf[:k])
 			}
-
-			return
 		}
 	})
 
