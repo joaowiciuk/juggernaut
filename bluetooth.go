@@ -87,7 +87,7 @@ func (bm *BluetoothManager) OnDisconnect() (f func(gatt.Central)) {
 }
 
 func (bm *BluetoothManager) Service() *gatt.Service {
-	s := gatt.NewService(gatt.UUID16(0x1815))
+	s := gatt.NewService(gatt.MustParseUUID("b2ac313f-fbab-47d5-9829-81b6887151a3"))
 
 	temperature := s.AddCharacteristic(gatt.MustParseUUID("aee5af4f-d1a8-4855-b770-b912519327d6"))
 	temperature.HandleReadFunc(func(rsp gatt.ResponseWriter, req *gatt.ReadRequest) {
