@@ -179,7 +179,7 @@ func (bm *BluetoothManager) Service() *gatt.Service {
 			}
 			reader := bytes.NewReader(source)
 
-			transf := make([]byte, 8)
+			transf := make([]byte, 20)
 
 			for {
 				k, err := reader.Read(transf)
