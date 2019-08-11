@@ -101,18 +101,18 @@ func (bm *BluetoothManager) Service() *gatt.Service {
 		}
 	})
 
-	readWifi := false
+	notifyWifi := false
 	wifi := s.AddCharacteristic(gatt.MustParseUUID("351e784a-4099-405e-8031-e4b473e668a4"))
 	wifi.HandleWriteFunc(func(r gatt.Request, data []byte) (status byte) {
 		if strings.ToLower(string(data)) == "readwifi" {
-			readWifi = true
+			notifyWifi = true
 		}
 		return gatt.StatusSuccess
 	})
 	wifi.HandleNotifyFunc(func(r gatt.Request, notifier gatt.Notifier) {
 		for !notifier.Done() {
 
-			if !readWifi {
+			if !notifyWifi {
 				continue
 			}
 
@@ -151,6 +151,7 @@ func (bm *BluetoothManager) Service() *gatt.Service {
 				//envia o buffer de transferência pelo notifier
 				fmt.Fprintf(notifier, "%s", transf[:k])
 			}
+			notifyWifi = false
 		}
 	})
 
