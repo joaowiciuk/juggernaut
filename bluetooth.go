@@ -137,7 +137,7 @@ func (bm *BluetoothManager) Service() *gatt.Service {
 			reader := bytes.NewReader(source)
 
 			//Buffer de transferência para enviar em pedaços
-			transf := make([]byte, 8)
+			transf := make([]byte, 20)
 
 			for {
 				k, err := reader.Read(transf)
