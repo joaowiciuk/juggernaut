@@ -54,7 +54,7 @@ func (e *EquipmentManager) Close() {
 }
 
 type Equipment struct {
-	ID uint `gorm:"primary_key"`
+	ID uint `json:"id" gorm:"primary_key"`
 
 	Name         string `json:"name"`
 	Type         string `json:"type"`
@@ -119,10 +119,6 @@ func (e *EquipmentManager) StateOf(equipment Equipment) (state State) {
 	return
 }
 
-func (e *EquipmentManager) Equipment() (equipment []Equipment) {
-	return e.DatabaseManager.ReadEquipment()
-}
-
 func (em *EquipmentManager) States() (states []State) {
 	//Initialize the list of states
 	states = make([]State, 0)
@@ -165,7 +161,7 @@ func (e *EquipmentManager) StatesHandler(w http.ResponseWriter, r *http.Request)
 }
 
 func (e *EquipmentManager) EquipmentHandler(w http.ResponseWriter, r *http.Request) {
-	equipment := e.Equipment()
+	equipment := e.DatabaseManager.ReadEquipment()
 	w.Header().Add("Access-Control-Allow-Origin", "*")
 	if err := json.NewEncoder(w).Encode(equipment); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
