@@ -12,9 +12,14 @@ import (
 )
 
 const (
-	TypeMotor = "motor"
-	TypeLamp  = "lamp"
-	TypeRoom  = "room"
+	TypeMotor     = "motor"
+	TypeLamp      = "lamp"
+	TypeRoom      = "room"
+	EquipmentOn   = "on"
+	EquipmentOff  = "off"
+	CommandToggle = "toggle"
+	CommandOn     = "on"
+	CommandOff    = "off"
 )
 
 //	Responsibilities:
@@ -61,11 +66,6 @@ type Equipment struct {
 	DeletedAt *time.Time `json:"deleted_at" sql:"index"`
 }
 
-const (
-	EquipmentOn  = "on"
-	EquipmentOff = "off"
-)
-
 type State struct {
 	ID uint `json:"id"`
 
@@ -74,12 +74,6 @@ type State struct {
 
 	UpdatedAt time.Time `json:"updated_at"`
 }
-
-const (
-	CommandToggle = "toggle"
-	CommandOn     = "on"
-	CommandOff    = "off"
-)
 
 func (e *EquipmentManager) Operate(equipment Equipment, command string) {
 	if err := rpio.Open(); err != nil {
@@ -110,7 +104,9 @@ func (e *EquipmentManager) Operate(equipment Equipment, command string) {
 
 func (e *EquipmentManager) StateOf(equipment Equipment) (state State) {
 	state = State{
-		Name: equipment.Name,
+		ID:        equipment.ID,
+		Name:      equipment.Name,
+		UpdatedAt: time.Now(),
 	}
 	switch equipment.Type {
 	case TypeLamp:
