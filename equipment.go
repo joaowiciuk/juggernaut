@@ -156,6 +156,7 @@ func (e *EquipmentManager) OperationHandler(w http.ResponseWriter, r *http.Reque
 
 func (e *EquipmentManager) StatesHandler(w http.ResponseWriter, r *http.Request) {
 	states := e.States()
+	w.Header().Add("Access-Control-Allow-Origin", "*")
 	if err := json.NewEncoder(w).Encode(states); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
