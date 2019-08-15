@@ -60,7 +60,7 @@ type Equipment struct {
 	Type         string `json:"type"`
 	StateAddress int    `json:"state_address"`
 	RelayPin     int    `json:"relay_pin"`
-	State        string `json:"value" gorm:"-"`
+	State        string `json:"state" gorm:"-"`
 
 	CreatedAt time.Time  `json:"created_at"`
 	UpdatedAt time.Time  `json:"updated_at"`
