@@ -163,3 +163,13 @@ func (e *EquipmentManager) StatesHandler(w http.ResponseWriter, r *http.Request)
 	}
 	w.WriteHeader(http.StatusOK)
 }
+
+func (e *EquipmentManager) EquipmentHandler(w http.ResponseWriter, r *http.Request) {
+	equipment := e.Equipment()
+	w.Header().Add("Access-Control-Allow-Origin", "*")
+	if err := json.NewEncoder(w).Encode(equipment); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+}
