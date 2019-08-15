@@ -60,19 +60,11 @@ type Equipment struct {
 	Type         string `json:"type"`
 	StateAddress int    `json:"state_address"`
 	RelayPin     int    `json:"relay_pin"`
+	State        string `json:"value" gorm:"-"`
 
 	CreatedAt time.Time  `json:"created_at"`
 	UpdatedAt time.Time  `json:"updated_at"`
 	DeletedAt *time.Time `json:"deleted_at" sql:"index"`
-}
-
-type State struct {
-	ID uint `json:"id"`
-
-	Name  string `json:"name"` //Equipment name
-	Value string `json:"value"`
-
-	UpdatedAt time.Time `json:"updated_at"`
 }
 
 func (e *EquipmentManager) Operate(equipment Equipment, command string) {
@@ -102,40 +94,15 @@ func (e *EquipmentManager) Operate(equipment Equipment, command string) {
 	return
 }
 
-func (e *EquipmentManager) StateOf(equipment Equipment) (state State) {
-	state = State{
-		ID:        equipment.ID,
-		Name:      equipment.Name,
-		UpdatedAt: time.Now(),
-	}
+func (e *EquipmentManager) SetStateOf(equipment *Equipment) {
 	switch equipment.Type {
 	case TypeLamp:
 		//TODO: Effectively read the lamp state
-		state.Value = EquipmentOff
+		equipment.State = EquipmentOff
 	default:
 		//TODO: Implement for other equipment too
-		state.Value = EquipmentOff
+		equipment.State = EquipmentOff
 	}
-	return
-}
-
-func (em *EquipmentManager) States() (states []State) {
-	//Initialize the list of states
-	states = make([]State, 0)
-
-	//Get equipment from DB
-	equipment := em.DatabaseManager.ReadEquipment()
-
-	//For each equipment, read it's state
-	for _, e := range equipment {
-		state := em.StateOf(e)
-
-		//Add the State to the list of states
-		states = append(states, state)
-	}
-
-	//Return the list of states
-	return
 }
 
 func (e *EquipmentManager) OperationHandler(w http.ResponseWriter, r *http.Request) {
@@ -150,18 +117,11 @@ func (e *EquipmentManager) OperationHandler(w http.ResponseWriter, r *http.Reque
 	w.WriteHeader(http.StatusOK)
 }
 
-func (e *EquipmentManager) StatesHandler(w http.ResponseWriter, r *http.Request) {
-	states := e.States()
-	w.Header().Add("Access-Control-Allow-Origin", "*")
-	if err := json.NewEncoder(w).Encode(states); err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-	w.WriteHeader(http.StatusOK)
-}
-
 func (e *EquipmentManager) EquipmentHandler(w http.ResponseWriter, r *http.Request) {
 	equipment := e.DatabaseManager.ReadEquipment()
+	for i := range equipment {
+		e.SetStateOf(&equipment[i])
+	}
 	w.Header().Add("Access-Control-Allow-Origin", "*")
 	if err := json.NewEncoder(w).Encode(equipment); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
