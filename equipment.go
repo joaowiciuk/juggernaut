@@ -51,10 +51,10 @@ func (e *EquipmentManager) Close() {
 type Equipment struct {
 	ID uint `gorm:"primary_key"`
 
-	Name     string `json:"name"`
-	Type     string `json:"type"`
-	StatePin int    `json:"state_pin"`
-	RelayPin int    `json:"relay_pin"`
+	Name         string `json:"name"`
+	Type         string `json:"type"`
+	StateAddress int    `json:"state_address"`
+	RelayPin     int    `json:"relay_pin"`
 
 	CreatedAt time.Time  `json:"created_at"`
 	UpdatedAt time.Time  `json:"updated_at"`
