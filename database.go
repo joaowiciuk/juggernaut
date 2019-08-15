@@ -90,6 +90,7 @@ func (dm *DatabaseManager) Open(url string) *gorm.DB {
 	db.LogMode(true)
 
 	db.AutoMigrate(&Device{})
+	db.AutoMigrate(&Equipment{})
 
 	return db
 }

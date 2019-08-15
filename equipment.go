@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
-	"github.com/gorilla/websocket"
 	rpio "github.com/stianeikeland/go-rpio"
 )
 
@@ -22,9 +21,8 @@ const (
 //	*	To handle equipment operation and state reading via Wifi - HTTP
 //	EquipmentManager
 type EquipmentManager struct {
-	LogFile   *os.File
-	Logger    *log.Logger
-	Equipment []Equipment
+	LogFile *os.File
+	Logger  *log.Logger
 
 	*DatabaseManager
 }
@@ -64,17 +62,17 @@ type Equipment struct {
 }
 
 const (
-	EquipmentPowerOn  = "PowerOn"
-	EquipmentPowerOff = "PowerOff"
+	EquipmentOn  = "on"
+	EquipmentOff = "off"
 )
 
 type State struct {
+	ID uint `json:"id"`
+
 	Name  string `json:"name"` //Equipment name
 	Value string `json:"value"`
-}
 
-func (e *EquipmentManager) Refresh() {
-	e.Equipment = e.DatabaseManager.ReadEquipment()
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 const (
@@ -117,19 +115,23 @@ func (e *EquipmentManager) StateOf(equipment Equipment) (state State) {
 	switch equipment.Type {
 	case TypeLamp:
 		//TODO: Effectively read the lamp state
-		state.Value = EquipmentPowerOff
+		state.Value = EquipmentOff
 	default:
 		//TODO: Implement for other equipment too
-		state.Value = EquipmentPowerOff
+		state.Value = EquipmentOff
 	}
 	return
 }
 
-func (em *EquipmentManager) Equipments() (states []State) {
+func (e *EquipmentManager) Equipment() (equipment []Equipment) {
+	return e.DatabaseManager.ReadEquipment()
+}
+
+func (em *EquipmentManager) States() (states []State) {
 	//Initialize the list of states
 	states = make([]State, 0)
 
-	//Get monitored equipment from DB
+	//Get equipment from DB
 	equipment := em.DatabaseManager.ReadEquipment()
 
 	//For each equipment, read it's state
@@ -156,29 +158,11 @@ func (e *EquipmentManager) OperationHandler(w http.ResponseWriter, r *http.Reque
 	w.WriteHeader(http.StatusOK)
 }
 
-func (e *EquipmentManager) StateHandler(w http.ResponseWriter, r *http.Request) {
-	e.Logger.Printf("state handler: request received.\n")
-	var upgrader = websocket.Upgrader{
-		ReadBufferSize:  1024,
-		WriteBufferSize: 1024,
-		CheckOrigin: func(r *http.Request) bool {
-			return true
-		},
-	}
-	conn, err := upgrader.Upgrade(w, r, nil)
-	if err != nil {
-		e.Logger.Printf("state handler: %v", err)
+func (e *EquipmentManager) StatesHandler(w http.ResponseWriter, r *http.Request) {
+	states := e.States()
+	if err := json.NewEncoder(w).Encode(states); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	defer conn.Close()
-	for {
-		states := e.Equipments()
-		err := conn.WriteJSON(states)
-		e.Logger.Printf("state handler: states sent: %v.\n", states)
-		if err != nil {
-			e.Logger.Printf("state handler: %v\n", err)
-			time.Sleep(500 * time.Millisecond)
-			continue
-		}
-	}
+	w.WriteHeader(http.StatusOK)
 }

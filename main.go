@@ -55,7 +55,8 @@ func main() {
 		log.Fatalf("main(): Initializing wifiManager: %v\n", err)
 	}
 	defer wifiManager.Close()
-	wifiManager.AddHandler(equipmentManager.OperationHandler, "/equipment/{command}", "POST")
+	wifiManager.AddHandler(equipmentManager.OperationHandler, "/api/equipment/{command}", "POST")
+	wifiManager.AddHandler(equipmentManager.StatesHandler, "/api/equipment/states", "GET")
 
 	//Inicialização telemetria
 	telemetryManager := NewTelemetryManager()
