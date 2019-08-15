@@ -90,8 +90,6 @@ func (e *EquipmentManager) Operate(equipment Equipment, command string) {
 		rpioPin.Toggle()
 		e.Logger.Printf("Toggle relay on pin %d.\n", pin)
 	}
-
-	return
 }
 
 func (e *EquipmentManager) SetStateOf(equipment *Equipment) {
@@ -114,6 +112,7 @@ func (e *EquipmentManager) OperationHandler(w http.ResponseWriter, r *http.Reque
 	}
 	command := mux.Vars(r)["command"]
 	e.Operate(equipment, command)
+	w.Header().Add("Access-Control-Allow-Origin", "*")
 	w.WriteHeader(http.StatusOK)
 }
 
