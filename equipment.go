@@ -96,13 +96,16 @@ func (e *EquipmentManager) Operate(equipment Equipment, command string) {
 
 func (e *EquipmentManager) SetStateOf(equipment *Equipment) {
 	switch equipment.Type {
+	//TODO: Implement for other equipment too
 	case TypeLamp:
-		if equipment.ID == 1 && e.DeviceManager.AnalogVariance() > 0.005 {
+		analogVariance := e.DeviceManager.AnalogVariance()
+		d.Logger.Printf("Analog variance: %.3f\n", analogVariance)
+		if equipment.ID == 1 && analogVariance > 0.005 {
 			equipment.State = EquipmentOn
+		} else {
+			equipment.State = EquipmentOff
 		}
-		fallthrough
 	default:
-		//TODO: Implement for other equipment too
 		equipment.State = EquipmentOff
 	}
 }
