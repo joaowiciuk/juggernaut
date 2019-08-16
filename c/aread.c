@@ -21,7 +21,7 @@ int main(void) {
 	}
 	setI2CSlave(0x48);
 	int i;
-	for (i = 0; i < 100; i++) {
+	for (i = 0; i < 5; i++) {
 		printf("%.2f\n", readVoltage(0));
 	}
 	return EXIT_SUCCESS;
