@@ -21,7 +21,7 @@
 int main(void) {
 	float x[N];
 	int i;
-    float average, variance, std_deviation, sum1 = 0;
+    float average, variance, std_deviation, sum, sum_of_sqr, sum1;
 
 	if (openI2CBus("/dev/i2c-1") == -1) {
 		return EXIT_FAILURE;
