@@ -51,7 +51,7 @@ float readVoltage(int channel)
 	float voltage;
 	unsigned int config = 0;
 
-	config = 		CONFIG_REG_OS_SINGLE		|
+config = 		CONFIG_REG_OS_SINGLE		|
 				CONFIG_REG_PGA_4_096V 		|
 				CONFIG_REG_MODE_SINGLE 		|
 				CONFIG_REG_DR_128SPS 		|
