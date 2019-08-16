@@ -21,6 +21,13 @@ func main() {
 	log.Printf("main() started.\n")
 	defer logFile.Close()
 
+	//InfraredManager
+	infraredManager := NewInfraredManager()
+	if err := infraredManager.Initialize("log/infrared"); err != nil {
+		log.Fatalf("main(): Initializing infraredManager: %v\n", err)
+	}
+	defer infraredManager.Close()
+
 	//SecurityManager
 	securityManager := NewSecurityManager()
 	if err := securityManager.Initialize("log/security"); err != nil {
@@ -57,6 +64,7 @@ func main() {
 	defer wifiManager.Close()
 	wifiManager.AddHandler(equipmentManager.OperationHandler, "/api/equipment/{command}", "POST")
 	wifiManager.AddHandler(equipmentManager.EquipmentHandler, "/api/equipment", "GET")
+	wifiManager.AddHandler(infraredManager.OperationHandler, "/api/infrared/{command}", "GET")
 
 	//Inicialização telemetria
 	telemetryManager := NewTelemetryManager()
