@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"net/http"
 	"os"
 	"os/exec"
 
@@ -45,7 +46,7 @@ func (i *InfraredManager) On() {
 			continue
 		}
 		if err := cmd.Wait(); err != nil {
-			d.Logger.Printf("finishing command: %v\n", err)
+			i.Logger.Printf("finishing command: %v\n", err)
 			continue
 		}
 		done = true
@@ -61,7 +62,7 @@ func (i *InfraredManager) Off() {
 			continue
 		}
 		if err := cmd.Wait(); err != nil {
-			d.Logger.Printf("finishing command: %v\n", err)
+			i.Logger.Printf("finishing command: %v\n", err)
 			continue
 		}
 		done = true
