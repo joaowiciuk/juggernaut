@@ -1,8 +1,8 @@
 /*
  ============================================================================
  Name        : read_ads1115.c
- Author      : Joao Wiciuk
- Description : Prints analog value using ADS1115
+ Author      : João Wiciuk
+ Description : Prints analog values using ADS1115
  ============================================================================
  */
 
@@ -16,12 +16,13 @@
 #include "ads1115_rpi.h"
 
 int main(void) {
-
-	if(openI2CBus("/dev/i2c-1") == -1)
-	{
+	if (openI2CBus("/dev/i2c-1") == -1) {
 		return EXIT_FAILURE;
 	}
 	setI2CSlave(0x48);
-	printf("%.2f\n", readVoltage(0));
+	int i;
+	for (i = 0; i < 100; i++) {
+		printf("%.2f\n", readVoltage(0));
+	}
 	return EXIT_SUCCESS;
 }
