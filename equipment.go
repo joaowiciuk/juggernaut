@@ -30,20 +30,22 @@ type EquipmentManager struct {
 	Logger  *log.Logger
 
 	*DatabaseManager
+	*DeviceManager
 }
 
 func NewEquipmentManager() (e *EquipmentManager) {
 	return &EquipmentManager{}
 }
 
-func (e *EquipmentManager) Initialize(logPath string, database *DatabaseManager) error {
+func (e *EquipmentManager) Initialize(logPath string, databaseManager *DatabaseManager, deviceManager *DeviceManager) error {
 	f, err := os.OpenFile(logPath, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0666)
 	if err != nil {
 		return err
 	}
 	e.LogFile = f
 	e.Logger = log.New(e.LogFile, "", log.Ldate|log.Ltime)
-	e.DatabaseManager = database
+	e.DatabaseManager = databaseManager
+	e.DeviceManager = deviceManager
 	e.Logger.Printf("EquipmentManager started.\n")
 	return nil
 }
@@ -95,8 +97,10 @@ func (e *EquipmentManager) Operate(equipment Equipment, command string) {
 func (e *EquipmentManager) SetStateOf(equipment *Equipment) {
 	switch equipment.Type {
 	case TypeLamp:
-		//TODO: Effectively read the lamp state
-		equipment.State = EquipmentOff
+		if equipment.ID == 1 && e.deviceManager.AnalogVariance() > 0.005 {
+			equipment.State = EquipmentOn
+		}
+		fallthrough
 	default:
 		//TODO: Implement for other equipment too
 		equipment.State = EquipmentOff

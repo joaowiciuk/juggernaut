@@ -168,3 +168,30 @@ func (d *DeviceManager) Temperature() float64 {
 	}
 	return temp
 }
+
+func (d *DeviceManager) AnalogVariance() float64 {
+	done := false
+	var analogVariance float64
+	for !done {
+		cmd := exec.Command("/bin/sh", "-c", "/home/pi/go/src/joaowiciuk/juggernaut/c/./avariance")
+		stdout, err := cmd.StdoutPipe()
+		if err != nil {
+			d.Logger.Println(err)
+			continue
+		}
+		if err := cmd.Start(); err != nil {
+			d.Logger.Println(err)
+			continue
+		}
+		buf := new(bytes.Buffer)
+		buf.ReadFrom(stdout)
+		output := buf.String()
+		analogVariance, err = strconv.ParseFloat(output, 64)
+		if err != nil {
+			d.Logger.Println(err)
+			continue
+		}
+		done = true
+	}
+	return analogVariance
+}

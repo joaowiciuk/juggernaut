@@ -44,7 +44,7 @@ func main() {
 
 	//EquipmentManager
 	equipmentManager := NewEquipmentManager()
-	if err := equipmentManager.Initialize("log/equipment", databaseManager); err != nil {
+	if err := equipmentManager.Initialize("log/equipment", databaseManager, deviceManager); err != nil {
 		log.Fatalf("main(): Initializing equipmentManager: %v\n", err)
 	}
 	defer equipmentManager.Close()
