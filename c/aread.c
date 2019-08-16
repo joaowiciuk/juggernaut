@@ -19,6 +19,9 @@
 #define N 5
 
 int main(void) {
+	float x[N];
+    float average, variance, std_deviation, sum1 = 0;
+
 	if (openI2CBus("/dev/i2c-1") == -1) {
 		return EXIT_FAILURE;
 	}
@@ -26,10 +29,23 @@ int main(void) {
 	int i;
 	float s2, sum, sum_of_sqr, cte;
 	for (i = 0; i < N; i++) {
-		printf("%.2f\n", readVoltage(0));
-		sum += readVoltage(0);
-		sum_of_sqr += pow(readVoltage(0), 2); 
+		x[i] = readVoltage(0);
+		printf("%.2f\n", x[i]);
+		sum += x[i];
+		sum_of_sqr += pow(x[i], 2); 
 	}
+
+	average = sum / (float) N;
+    /*  Compute  variance  and standard deviation  */
+    for (i = 0; i < N; i++) {
+        sum1 = sum1 + pow((x[i] - average), 2);
+    }
+    variance = sum1 / (float)N;
+    std_deviation = sqrt(variance);
+    printf("Average of all elements = %.2f\n", average);
+    printf("variance of all elements = %.2f\n", variance);
+    printf("Standard deviation = %.2f\n", std_deviation);
+
 	cte = 1 / ((float) N * ((float) N - 1));
 	s2 = cte * ((float) N * sum_of_sqr - pow(sum, 2));
 	printf("cte: %.2f\n", cte);
