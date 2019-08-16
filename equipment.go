@@ -99,7 +99,7 @@ func (e *EquipmentManager) SetStateOf(equipment *Equipment) {
 	//TODO: Implement for other equipment too
 	case TypeLamp:
 		analogVariance := e.DeviceManager.AnalogVariance()
-		d.Logger.Printf("Analog variance: %.3f\n", analogVariance)
+		e.Logger.Printf("Analog variance: %.3f\n", analogVariance)
 		if equipment.ID == 1 && analogVariance > 0.005 {
 			equipment.State = EquipmentOn
 		} else {
