@@ -30,8 +30,8 @@ int main(void) {
 		sum += readVoltage(0);
 		sum_of_sqr += pow(readVoltage(0), 2);
 	}
-	cte = 1 / ((float) N * ((float) N - 1))
-	s2 = cte * ((float) N * sum_of_sqr - pow(sum, 2))
+	cte = 1 / ((float) N * ((float) N - 1));
+	s2 = cte * ((float) N * sum_of_sqr - pow(sum, 2));
 	printf("%.2f\n", s2);
 	return EXIT_SUCCESS;
 }
