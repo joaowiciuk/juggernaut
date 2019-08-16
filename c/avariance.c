@@ -44,6 +44,6 @@ int main(void) {
     std_deviation = sqrt(variance);
     //printf("Average of all elements = %.2f\n", average);
     //printf("variance of all elements = %.2f\n", variance);
-    printf("%.3f\n", std_deviation);
+    printf("%.3f", std_deviation);
 	return EXIT_SUCCESS;
 }
