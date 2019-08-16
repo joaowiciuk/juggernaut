@@ -97,7 +97,7 @@ func (e *EquipmentManager) Operate(equipment Equipment, command string) {
 func (e *EquipmentManager) SetStateOf(equipment *Equipment) {
 	switch equipment.Type {
 	case TypeLamp:
-		if equipment.ID == 1 && e.deviceManager.AnalogVariance() > 0.005 {
+		if equipment.ID == 1 && e.DeviceManager.AnalogVariance() > 0.005 {
 			equipment.State = EquipmentOn
 		}
 		fallthrough
