@@ -193,5 +193,6 @@ func (d *DeviceManager) AnalogVariance() float64 {
 		}
 		done = true
 	}
+	d.Logger.Printf("Analog variance: %.3f\n", analogVariance)
 	return analogVariance
 }

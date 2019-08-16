@@ -130,5 +130,4 @@ func (e *EquipmentManager) EquipmentHandler(w http.ResponseWriter, r *http.Reque
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	w.WriteHeader(http.StatusOK)
 }
