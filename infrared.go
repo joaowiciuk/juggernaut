@@ -79,6 +79,7 @@ func (i *InfraredManager) Receive() (received string) {
 	var parsingErr error
 	var currentMicros, previousMicros int64
 	tolerance := int64(250)
+	received = ""
 	for err == nil {
 		symbol, err = buf.ReadString(0x0A)
 		currentPolarity = symbol[0:1]
@@ -115,5 +116,7 @@ func (i *InfraredManager) SendHandler(w http.ResponseWriter, r *http.Request) {
 
 func (i *InfraredManager) ReceiveHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Access-Control-Allow-Origin", "*")
-	fmt.Fprintf(w, "%s", i.Receive())
+	received := i.Receive()
+	i.Logger.Printf("received: %s\n", received)
+	fmt.Fprintf(w, "%s", received)
 }
