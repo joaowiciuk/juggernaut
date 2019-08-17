@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bytes"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -69,6 +71,37 @@ func (i *InfraredManager) Off() {
 	}
 }
 
+func (i *InfraredManager) Receive() uint32 {
+	done := false
+	var received uint32
+	for !done {
+		cmd := exec.Command("/bin/sh", "-c", "sudo /home/pi/go/src/joaowiciuk/juggernaut/c/./irreceive")
+		stdout, err := cmd.StdoutPipe()
+		if err != nil {
+			i.Logger.Printf("receiving ir: %s\n", err)
+			continue
+		}
+		if err := cmd.Start(); err != nil {
+			i.Logger.Printf("receiving ir: %s\n", err)
+			continue
+		}
+		buf := new(bytes.Buffer)
+		buf.ReadFrom(stdout)
+		if err := cmd.Wait(); err != nil {
+			i.Logger.Printf("receiving ir: %s\n", err)
+			continue
+		}
+		err = nil
+		var unit string
+		for err == nil {
+			unit, err = buf.ReadString(0x0A)
+			i.Logger.Printf("received ir unit: %s\n", unit)
+		}
+		done = true
+	}
+	return received
+}
+
 func (i *InfraredManager) OperationHandler(w http.ResponseWriter, r *http.Request) {
 	command := mux.Vars(r)["command"]
 	switch command {
@@ -79,4 +112,9 @@ func (i *InfraredManager) OperationHandler(w http.ResponseWriter, r *http.Reques
 	}
 	w.Header().Add("Access-Control-Allow-Origin", "*")
 	w.WriteHeader(http.StatusOK)
+}
+
+func (i *InfraredManager) ReceiveHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Add("Access-Control-Allow-Origin", "*")
+	fmt.Fprintf(w, "%d", i.Receive())
 }
