@@ -86,6 +86,8 @@ func (i *InfraredManager) Receive() (received string) {
 			currentPolarity = symbol[0:1]
 			currentMicros, _ = strconv.ParseInt(symbol[2:], 10, 64)
 
+			i.Logger.Printf("%s %d\n", currentPolarity, currentMicros)
+
 			if currentPolarity == "0" && (currentMicros < 562+tolerance || currentMicros > 562-tolerance) &&
 				previousPolarity == "1" && (previousMicros < 562+tolerance || previousMicros > 562-tolerance) {
 				received = received + "0"
