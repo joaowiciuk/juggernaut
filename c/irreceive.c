@@ -60,7 +60,7 @@ int main(int argc, char * argv[])
       if (ir_hash)
       {
          /* non-zero means new decode */
-         printf("\nir hash is %u\n", ir_hash);
+         printf("ir hash is %u\n", ir_hash);
          ir_hash = 0;
          return 0;
       }
@@ -73,9 +73,6 @@ int main(int argc, char * argv[])
 
 void alert(int gpio, int level, uint32_t tick)
 {
-   if (level != 2) {
-      printf("%d %u\n", level, tick);
-   }
    static int inited = 0;
 
    static decode_t activeHigh, activeLow;
@@ -96,6 +93,9 @@ void alert(int gpio, int level, uint32_t tick)
    }
 
    diffTick = tick - lastTick;
+   if (level != 2) {
+      printf("%d %u\n", level, diffTick);
+   }
 
    if (level != PI_TIMEOUT) lastTick = tick;
 
