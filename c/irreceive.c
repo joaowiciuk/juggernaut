@@ -5,7 +5,7 @@
 #define IR_PIN 25
 
 #define OUTSIDE_CODE 0
-#define INSIDE_CODE  1
+#define INSIDE_CODE 1
 
 #define MIN_MESSAGE_GAP 3000
 #define MAX_MESSAGE_END 3000
@@ -32,15 +32,17 @@ typedef struct
 
 /* forward declarations */
 
-void     alert(int gpio, int level, uint32_t tick);
-uint32_t getHash(decode_t * decode);
-void     updateState(decode_t * decode, int level, uint32_t micros);
+void alert(int gpio, int level, uint32_t tick);
+uint32_t getHash(decode_t *decode);
+void updateState(decode_t *decode, int level, uint32_t micros);
 
-int main(int argc, char * argv[])
+int main(int argc, char *argv[])
 {
-   if (gpioInitialise()<0)
+   printf("start\n");
+
+   if (gpioInitialise() < 0)
    {
-      return 1 ;
+      return 1;
    }
 
    /* IR pin as input */
@@ -62,6 +64,7 @@ int main(int argc, char * argv[])
          /* non-zero means new decode */
          //printf("ir hash is %u\n", ir_hash);
          ir_hash = 0;
+         printf("end\n");
          return 0;
       }
 
@@ -85,25 +88,29 @@ void alert(int gpio, int level, uint32_t tick)
    {
       inited = 1;
 
-      activeHigh.state = OUTSIDE_CODE; activeHigh.level = PI_LOW;
-      activeLow.state  = OUTSIDE_CODE; activeLow.level  = PI_HIGH;
+      activeHigh.state = OUTSIDE_CODE;
+      activeHigh.level = PI_LOW;
+      activeLow.state = OUTSIDE_CODE;
+      activeLow.level = PI_HIGH;
 
       lastTick = tick;
       return;
    }
 
    diffTick = tick - lastTick;
-   if (level != 2) {
+   if (level != 2)
+   {
       printf("%d %u\n", level, diffTick);
    }
 
-   if (level != PI_TIMEOUT) lastTick = tick;
+   if (level != PI_TIMEOUT)
+      lastTick = tick;
 
    updateState(&activeHigh, level, diffTick);
    updateState(&activeLow, level, diffTick);
 }
 
-void updateState(decode_t * decode, int level, uint32_t micros)
+void updateState(decode_t *decode, int level, uint32_t micros)
 {
    /*
       We are dealing with active high as well as active low
@@ -129,13 +136,14 @@ void updateState(decode_t * decode, int level, uint32_t micros)
 
          /* ignore if last code not consumed */
 
-         if (!ir_hash) ir_hash = getHash(decode);
+         if (!ir_hash)
+            ir_hash = getHash(decode);
 
          decode->state = OUTSIDE_CODE;
       }
       else
       {
-         if (decode->count < (MAX_TRANSITIONS-1))
+         if (decode->count < (MAX_TRANSITIONS - 1))
          {
             if (level != PI_TIMEOUT)
                decode->micros[decode->count++] = micros;
@@ -146,25 +154,37 @@ void updateState(decode_t * decode, int level, uint32_t micros)
 
 int compare(unsigned int oldval, unsigned int newval)
 {
-   if      (newval < (oldval * 0.75)) {return 1;}
-   else if (oldval < (newval * 0.75)) {return 2;}
-   else                               {return 4;}
+   if (newval < (oldval * 0.75))
+   {
+      return 1;
+   }
+   else if (oldval < (newval * 0.75))
+   {
+      return 2;
+   }
+   else
+   {
+      return 4;
+   }
 }
 
-uint32_t getHash(decode_t * decode)
+uint32_t getHash(decode_t *decode)
 {
    /* use FNV-1a */
 
    uint32_t hash;
    int i, value;
 
-   if (decode->count < 6) {return 0;}
+   if (decode->count < 6)
+   {
+      return 0;
+   }
 
    hash = FNV_BASIS_32;
 
-   for (i=0; i<(decode->count-2); i++)
+   for (i = 0; i < (decode->count - 2); i++)
    {
-      value = compare(decode->micros[i], decode->micros[i+2]);
+      value = compare(decode->micros[i], decode->micros[i + 2]);
 
       hash = hash ^ value;
       hash = (hash * FNV_PRIME_32);

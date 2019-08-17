@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -74,21 +75,26 @@ func (i *InfraredManager) Receive() (received string) {
 		i.Logger.Printf("receiving ir: %s\n", err)
 		return "0"
 	}
-	err = nil
 	var symbol, currentPolarity, previousPolarity string
-	var parsingErr error
 	var currentMicros, previousMicros int64
 	tolerance := int64(250)
 	received = ""
-	for err == nil {
+	for {
 		symbol, err = buf.ReadString(0x0A)
-		currentPolarity = symbol[0:1]
-		//i.Logger.Printf("symbol[2:len(symbol)-1] = %s\n", symbol[2:len(symbol)-1])
-		currentMicros, parsingErr = strconv.ParseInt(symbol[2:len(symbol)-1], 10, 64)
-		if parsingErr != nil || currentMicros == 0 {
-			i.Logger.Printf("receiving ir: error parsing micros: %s\n", parsingErr)
-			return "0"
+		if err == io.EOF {
+			break
 		}
+
+		if symbol[0:len(symbol)-1] == "end" {
+			break
+		}
+
+		if symbol[0:len(symbol)-1] == "start" {
+			continue
+		}
+
+		currentPolarity = symbol[0:1]
+		currentMicros, _ = strconv.ParseInt(symbol[2:len(symbol)-1], 10, 64)
 
 		if currentPolarity == "0" && (currentMicros < 562+tolerance || currentMicros > 562-tolerance) &&
 			previousPolarity == "1" && (previousMicros < 562+tolerance || previousMicros > 562-tolerance) {
