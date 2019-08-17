@@ -72,6 +72,7 @@ func (i *InfraredManager) Off() {
 }
 
 func (i *InfraredManager) Receive() uint32 {
+	i.Logger.Printf("receiving ir\n")
 	done := false
 	var received uint32
 	for !done {
