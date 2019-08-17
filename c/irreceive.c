@@ -74,7 +74,7 @@ int main(int argc, char * argv[])
 void alert(int gpio, int level, uint32_t tick)
 {
    if (level != 2) {
-      printf("%d", level);
+      printf("%d %d\n", level, tick);
    }
    static int inited = 0;
 
