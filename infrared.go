@@ -59,6 +59,7 @@ func (i *InfraredManager) Send(pin, signal string) {
 
 func (i *InfraredManager) Receive() (received string) {
 	done := false
+	received = ""
 	for !done {
 		cmd := exec.Command("/bin/sh", "-c", "sudo /home/pi/go/src/joaowiciuk/juggernaut/c/./irreceive")
 		stdout, err := cmd.StdoutPipe()
