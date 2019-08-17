@@ -79,7 +79,6 @@ func (i *InfraredManager) Receive() (received string) {
 		err = nil
 		var symbol, currentPolarity, previousPolarity string
 		var currentMicros, previousMicros int64
-		received = ""
 		tolerance := int64(250)
 		for err == nil {
 			symbol, err = buf.ReadString(0x0A)
@@ -98,13 +97,13 @@ func (i *InfraredManager) Receive() (received string) {
 				received = received + "1"
 			}
 
-			i.Logger.Println(received)
-
 			previousPolarity = currentPolarity
 			previousMicros = currentMicros
 		}
 		done = true
 	}
+
+	i.Logger.Println(received)
 	return
 }
 
