@@ -59,7 +59,6 @@ func (i *InfraredManager) Send(pin, signal string) {
 
 func (i *InfraredManager) Receive() (received string) {
 	done := false
-	received = ""
 	for !done {
 		cmd := exec.Command("/bin/sh", "-c", "sudo /home/pi/go/src/joaowiciuk/juggernaut/c/./irreceive")
 		stdout, err := cmd.StdoutPipe()
@@ -84,9 +83,15 @@ func (i *InfraredManager) Receive() (received string) {
 		for err == nil {
 			symbol, err = buf.ReadString(0x0A)
 			currentPolarity = symbol[0:1]
+			i.Logger.Printf("%s\n", symbol[2:])
+			i.Logger.Printf("%s\n", symbol[3:])
+			i.Logger.Printf("%s\n", symbol[4:])
+			i.Logger.Printf("%s\n", symbol[2:len(symbol)-2])
+			i.Logger.Printf("%s\n", symbol[3:len(symbol)-2])
+			i.Logger.Printf("%s\n", symbol[4:len(symbol)-2])
 			currentMicros, _ = strconv.ParseInt(symbol[2:], 10, 64)
 
-			i.Logger.Printf("%s %d\n", currentPolarity, currentMicros)
+			//i.Logger.Printf("%s %d\n", currentPolarity, currentMicros)
 
 			if currentPolarity == "0" && (currentMicros < 562+tolerance || currentMicros > 562-tolerance) &&
 				previousPolarity == "1" && (previousMicros < 562+tolerance || previousMicros > 562-tolerance) {
@@ -104,7 +109,6 @@ func (i *InfraredManager) Receive() (received string) {
 		done = true
 	}
 
-	i.Logger.Println(received)
 	return
 }
 
