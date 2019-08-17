@@ -64,7 +64,7 @@ func main() {
 	defer wifiManager.Close()
 	wifiManager.AddHandler(equipmentManager.OperationHandler, "/api/equipment/{command}", "POST")
 	wifiManager.AddHandler(equipmentManager.EquipmentHandler, "/api/equipment", "GET")
-	wifiManager.AddHandler(infraredManager.OperationHandler, "/api/infrared/send/{command}", "GET")
+	wifiManager.AddHandler(infraredManager.SendHandler, "/api/infrared/send/{pin}/{signal}", "GET")
 	wifiManager.AddHandler(infraredManager.ReceiveHandler, "/api/infrared/receive", "GET")
 
 	//Inicialização telemetria

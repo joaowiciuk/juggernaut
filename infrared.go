@@ -71,9 +71,25 @@ func (i *InfraredManager) Off() {
 	}
 }
 
-func (i *InfraredManager) Receive() uint32 {
+func (i *InfraredManager) Send(pin, signal string) {
 	done := false
-	var received uint32
+	for !done {
+		cli := fmt.Sprintf("sudo /home/pi/go/src/joaowiciuk/juggernaut/c/./irsend %s %s", pin, signal)
+		cmd := exec.Command("/bin/sh", "-c", cli)
+		if err := cmd.Start(); err != nil {
+			i.Logger.Printf("sending ir signal: %v\n", err)
+			continue
+		}
+		if err := cmd.Wait(); err != nil {
+			i.Logger.Printf("sending ir signal: %v\n", err)
+			continue
+		}
+		done = true
+	}
+}
+
+func (i *InfraredManager) Receive() (received string) {
+	done := false
 	for !done {
 		cmd := exec.Command("/bin/sh", "-c", "sudo /home/pi/go/src/joaowiciuk/juggernaut/c/./irreceive")
 		stdout, err := cmd.StdoutPipe()
@@ -99,22 +115,18 @@ func (i *InfraredManager) Receive() uint32 {
 		}
 		done = true
 	}
-	return received
+	return
 }
 
-func (i *InfraredManager) OperationHandler(w http.ResponseWriter, r *http.Request) {
-	command := mux.Vars(r)["command"]
-	switch command {
-	case "on":
-		i.On()
-	default:
-		i.Off()
-	}
+func (i *InfraredManager) SendHandler(w http.ResponseWriter, r *http.Request) {
+	pin := mux.Vars(r)["pin"]
+	signal := mux.Vars(r)["signal"]
+	i.Send(pin, signal)
 	w.Header().Add("Access-Control-Allow-Origin", "*")
 	w.WriteHeader(http.StatusOK)
 }
 
 func (i *InfraredManager) ReceiveHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Access-Control-Allow-Origin", "*")
-	fmt.Fprintf(w, "%d", i.Receive())
+	fmt.Fprintf(w, "%s", i.Receive())
 }
