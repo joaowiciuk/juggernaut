@@ -88,15 +88,15 @@ func (i *InfraredManager) Receive() uint32 {
 		}
 		buf := new(bytes.Buffer)
 		buf.ReadFrom(stdout)
-		if err := cmd.Wait(); err != nil {
-			i.Logger.Printf("receiving ir: %s\n", err)
-			continue
-		}
 		err = nil
 		var unit string
 		for err == nil {
 			unit, err = buf.ReadString(0x0A)
 			i.Logger.Printf("received ir unit: %s\n", unit)
+		}
+		if err := cmd.Wait(); err != nil {
+			i.Logger.Printf("receiving ir: %s\n", err)
+			continue
 		}
 		done = true
 	}
