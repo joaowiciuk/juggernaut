@@ -39,38 +39,6 @@ func (i *InfraredManager) Close() {
 	i.LogFile.Close()
 }
 
-func (i *InfraredManager) On() {
-	done := false
-	for !done {
-		cmd := exec.Command("/bin/sh", "-c", "sudo /home/pi/go/src/joaowiciuk/juggernaut/c/./iron")
-		if err := cmd.Start(); err != nil {
-			i.Logger.Printf("starting command: %v\n", err)
-			continue
-		}
-		if err := cmd.Wait(); err != nil {
-			i.Logger.Printf("finishing command: %v\n", err)
-			continue
-		}
-		done = true
-	}
-}
-
-func (i *InfraredManager) Off() {
-	done := false
-	for !done {
-		cmd := exec.Command("/bin/sh", "-c", "sudo /home/pi/go/src/joaowiciuk/juggernaut/c/./iroff")
-		if err := cmd.Start(); err != nil {
-			i.Logger.Printf("starting command: %v\n", err)
-			continue
-		}
-		if err := cmd.Wait(); err != nil {
-			i.Logger.Printf("finishing command: %v\n", err)
-			continue
-		}
-		done = true
-	}
-}
-
 func (i *InfraredManager) Send(pin, signal string) {
 	done := false
 	for !done {
