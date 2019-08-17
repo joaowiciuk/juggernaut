@@ -109,7 +109,6 @@ func (i *InfraredManager) Receive() (received string) {
 		previousPolarity = currentPolarity
 		previousMicros = currentMicros
 	}
-	i.Logger.Printf("received: %s\n", received)
 	return received
 }
 
@@ -123,6 +122,5 @@ func (i *InfraredManager) SendHandler(w http.ResponseWriter, r *http.Request) {
 
 func (i *InfraredManager) ReceiveHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Access-Control-Allow-Origin", "*")
-	received := i.Receive()
-	fmt.Fprintf(w, "%s", received)
+	fmt.Fprintf(w, "%s", i.Receive())
 }
