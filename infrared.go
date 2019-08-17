@@ -83,6 +83,7 @@ func (i *InfraredManager) Receive() (received string) {
 		tolerance := int64(250)
 		for err == nil {
 			symbol, _ := buf.ReadString(0x0A)
+			i.Logger.Println(symbol)
 			currentPolarity = symbol[0:1]
 			currentMicros, _ = strconv.ParseInt(symbol[2:], 10, 64)
 
