@@ -60,7 +60,7 @@ int main(int argc, char * argv[])
       if (ir_hash)
       {
          /* non-zero means new decode */
-         printf("ir hash is %u\n", ir_hash);
+         //printf("ir hash is %u\n", ir_hash);
          ir_hash = 0;
          return 0;
       }
