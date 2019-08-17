@@ -83,12 +83,12 @@ func (i *InfraredManager) Receive() (received string) {
 		for err == nil {
 			symbol, err = buf.ReadString(0x0A)
 			currentPolarity = symbol[0:1]
-			i.Logger.Printf("%s\n", symbol[2:])
-			i.Logger.Printf("%s\n", symbol[3:])
-			i.Logger.Printf("%s\n", symbol[4:])
-			i.Logger.Printf("%s\n", symbol[2:len(symbol)-2])
-			i.Logger.Printf("%s\n", symbol[3:len(symbol)-2])
-			i.Logger.Printf("%s\n", symbol[4:len(symbol)-2])
+			i.Logger.Printf("symbol[2:] = %s\n", symbol[2:])
+			i.Logger.Printf("symbol[3:] = %s\n", symbol[3:])
+			i.Logger.Printf("symbol[4:] = %s\n", symbol[4:])
+			i.Logger.Printf("symbol[2:len(symbol)-2] = %s\n", symbol[2:len(symbol)-2])
+			i.Logger.Printf("symbol[3:len(symbol)-2] = %s\n", symbol[3:len(symbol)-2])
+			i.Logger.Printf("symbol[4:len(symbol)-2] = %s\n", symbol[4:len(symbol)-2])
 			currentMicros, _ = strconv.ParseInt(symbol[2:], 10, 64)
 
 			//i.Logger.Printf("%s %d\n", currentPolarity, currentMicros)
