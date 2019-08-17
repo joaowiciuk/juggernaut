@@ -83,7 +83,7 @@ func (i *InfraredManager) Receive() (received string) {
 	for err == nil {
 		symbol, err = buf.ReadString(0x0A)
 		currentPolarity = symbol[0:1]
-		i.Logger.Printf("symbol[2:len(symbol)-1] = %s\n", symbol[2:len(symbol)-1])
+		//i.Logger.Printf("symbol[2:len(symbol)-1] = %s\n", symbol[2:len(symbol)-1])
 		currentMicros, parsingErr = strconv.ParseInt(symbol[2:len(symbol)-1], 10, 64)
 		if parsingErr != nil || currentMicros == 0 {
 			i.Logger.Printf("receiving ir: error parsing micros: %s\n", parsingErr)
@@ -99,6 +99,8 @@ func (i *InfraredManager) Receive() (received string) {
 			previousPolarity == "1" && (previousMicros < 562+tolerance || previousMicros > 562-tolerance) {
 			received = received + "1"
 		}
+
+		i.Logger.Printf("%s %d\n", currentPolarity, currentMicros)
 
 		previousPolarity = currentPolarity
 		previousMicros = currentMicros
