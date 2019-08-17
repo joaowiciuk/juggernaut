@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -113,11 +112,12 @@ func (i *InfraredManager) OperationHandler(w http.ResponseWriter, r *http.Reques
 		i.Off()
 	}
 	w.Header().Add("Access-Control-Allow-Origin", "*")
+	i.Logger.Println("Logger working!")
 	w.WriteHeader(http.StatusOK)
 }
 
 func (i *InfraredManager) ReceiveHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Access-Control-Allow-Origin", "*")
 	i.Logger.Println("Logger not working!")
-	fmt.Fprintf(w, "%d", i.Receive())
+	w.WriteHeader(http.StatusOK)
 }
