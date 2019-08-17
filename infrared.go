@@ -78,6 +78,7 @@ func (i *InfraredManager) Receive() (received string) {
 		}
 		err = nil
 		var symbol, currentPolarity, previousPolarity string
+		var parsingErr error
 		var currentMicros, previousMicros int64
 		tolerance := int64(250)
 		for err == nil {
@@ -86,12 +87,13 @@ func (i *InfraredManager) Receive() (received string) {
 			i.Logger.Printf("symbol[2:] = %s\n", symbol[2:])
 			i.Logger.Printf("symbol[3:] = %s\n", symbol[3:])
 			i.Logger.Printf("symbol[4:] = %s\n", symbol[4:])
-			i.Logger.Printf("symbol[2:len(symbol)-2] = %s\n", symbol[2:len(symbol)-2])
-			i.Logger.Printf("symbol[3:len(symbol)-2] = %s\n", symbol[3:len(symbol)-2])
-			i.Logger.Printf("symbol[4:len(symbol)-2] = %s\n", symbol[4:len(symbol)-2])
-			currentMicros, _ = strconv.ParseInt(symbol[2:], 10, 64)
-
-			//i.Logger.Printf("%s %d\n", currentPolarity, currentMicros)
+			i.Logger.Printf("symbol[2:len(symbol)-2] = %s\n", symbol[2:len(symbol)-1])
+			i.Logger.Printf("symbol[3:len(symbol)-2] = %s\n", symbol[3:len(symbol)-1])
+			i.Logger.Printf("symbol[4:len(symbol)-2] = %s\n", symbol[4:len(symbol)-1])
+			currentMicros, parsingErr = strconv.ParseInt(symbol[2:len(symbol)-1], 10, 64)
+			if parsingErr != nil {
+				i.Logger.Printf("receiving ir: %s\n", parsingErr)
+			}
 
 			if currentPolarity == "0" && (currentMicros < 562+tolerance || currentMicros > 562-tolerance) &&
 				previousPolarity == "1" && (previousMicros < 562+tolerance || previousMicros > 562-tolerance) {
