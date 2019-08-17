@@ -40,6 +40,7 @@ func (i *InfraredManager) Close() {
 }
 
 func (i *InfraredManager) On() {
+	i.Logger.Printf("starting command\n")
 	done := false
 	for !done {
 		cmd := exec.Command("/bin/sh", "-c", "sudo /home/pi/go/src/joaowiciuk/juggernaut/c/./iron")
@@ -117,5 +118,6 @@ func (i *InfraredManager) OperationHandler(w http.ResponseWriter, r *http.Reques
 
 func (i *InfraredManager) ReceiveHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Access-Control-Allow-Origin", "*")
+	i.Logger.Println("Logger not working!")
 	fmt.Fprintf(w, "%d", i.Receive())
 }
