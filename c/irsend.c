@@ -4,7 +4,7 @@
 
 int main(int argc, char *argv[]) {
     if (argc < 3) {
-        return
+        return 1
     }
 
 	uint32_t outPin;            // The Broadcom pin number the signal will be sent on
