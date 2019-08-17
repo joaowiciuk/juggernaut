@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"strconv"
 
 	"github.com/gorilla/mux"
 )
@@ -76,10 +77,27 @@ func (i *InfraredManager) Receive() (received string) {
 			continue
 		}
 		err = nil
-		var unit string
+		var currentPolarity, previousPolarity string
+		var currentMicros, previousMicros int64
+		received = ""
+		tolerance := int64(250)
 		for err == nil {
-			unit, err = buf.ReadString(0x0A)
-			i.Logger.Printf("received ir unit: %s\n", unit)
+			symbol, _ := buf.ReadString(0x0A)
+			currentPolarity = symbol[0:1]
+			currentMicros, _ = strconv.ParseInt(symbol[2:], 10, 64)
+
+			if currentPolarity == "0" && (currentMicros < 562+tolerance || currentMicros > 562-tolerance) &&
+				previousPolarity == "1" && (previousMicros < 562+tolerance || previousMicros > 562-tolerance) {
+				received = received + "0"
+			}
+
+			if currentPolarity == "0" && (currentMicros < 1687+tolerance || currentMicros > 1687-tolerance) &&
+				previousPolarity == "1" && (previousMicros < 562+tolerance || previousMicros > 562-tolerance) {
+				received = received + "1"
+			}
+
+			previousPolarity = currentPolarity
+			previousMicros = currentMicros
 		}
 		done = true
 	}
