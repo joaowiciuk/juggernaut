@@ -1,5 +1,11 @@
 package main
 
+// #cgo CFLAGS: -Wall
+// #cgo LDFLAGS: -lpigpio -lm -lpigpio -pthread -lrt
+// #include <stdlib.h>
+// #include ".c/infrared.h"
+import "C"
+
 import (
 	"bytes"
 	"fmt"
@@ -42,6 +48,8 @@ func (i *InfraredManager) Close() {
 }
 
 func (i *InfraredManager) Send(pin, signal string) {
+	cReturn := C.send(C.int(24), C.uint(12))
+	i.Logger.Printf("sending ir signal: received from c function: %d\n", cReturn)
 	done := false
 	for !done {
 		cli := fmt.Sprintf("sudo /home/pi/go/src/joaowiciuk/juggernaut/c/./irsend %s %s", pin, signal)
