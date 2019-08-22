@@ -50,14 +50,18 @@ func (i *InfraredManager) Close() {
 }
 
 func (i *InfraredManager) Send(pin, signal string) {
-	intPin, _ := strconv.ParseInt(pin, 10, 8)
+	cPin := C.CString(pin)
+	defer C.free(unsafe.Pointer(cPin))
+
 	cSignal := C.CString(signal)
 	defer C.free(unsafe.Pointer(cSignal))
-	undefined := C.send(C.int(intPin), cSignal)
+
+	undefined := C.send(cPin, cSignal)
 	response := int(undefined)
+
 	i.Logger.Printf("sending ir signal: received from c function: %d\n", response)
 
-	done := false
+	/* done := false
 	for !done {
 		cli := fmt.Sprintf("sudo /home/pi/go/src/joaowiciuk/juggernaut/c/./irsend %s %s", pin, signal)
 		cmd := exec.Command("/bin/sh", "-c", cli)
@@ -70,7 +74,7 @@ func (i *InfraredManager) Send(pin, signal string) {
 			continue
 		}
 		done = true
-	}
+	} */
 }
 
 func (i *InfraredManager) Receive() (received string) {
