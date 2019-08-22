@@ -2,7 +2,7 @@ package main
 
 // #cgo CFLAGS: -g -Wall -I${SRCDIR}/c
 // #include <stdlib.h>
-// #include "infrared.h"
+// #include "./c/infrared.h"
 import "C"
 
 import (
