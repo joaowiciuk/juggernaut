@@ -3,7 +3,7 @@
 
 int number();
 int send(int pin, unsigned int signal);
-//int hello();
-//int greet(const char *name, int year, char *out);
+int hello();
+int greet(const char *name, int year, char *out);
 
 #endif

@@ -1,9 +1,34 @@
 package main
 
-// #cgo CFLAGS: -Wall
-// #cgo LDFLAGS: -lm -lpigpio -pthread -lrt
-// #include <stdlib.h>
-// #include "./c/infrared.h"
+/*
+#include <stdio.h>
+#include <stdlib.h>
+
+int number();
+int send(int pin, unsigned int signal);
+int hello();
+int greet(const char *name, int year, char *out);
+
+int number() {
+	return 42;
+}
+
+int send(int pin, unsigned int signal) {
+    return 10;
+}
+
+int hello() {
+    return 9;
+}
+
+int greet(const char *name, int year, char *out) {
+    int n;
+
+    n = sprintf(out, "Greetings, %s from %d! We come in peace :)", name, year);
+
+    return n;
+}
+*/
 import "C"
 
 import (
@@ -15,6 +40,7 @@ import (
 	"os"
 	"os/exec"
 	"strconv"
+	"unsafe"
 
 	"github.com/gorilla/mux"
 )
@@ -58,10 +84,10 @@ func (i *InfraredManager) Send(pin, signal string) {
 	lifeMeaning := C.number()
 	i.Logger.Printf("sending ir signal: received from c function: %d\n", lifeMeaning)
 
-	/* number := C.hello()
-	i.Logger.Printf("sending ir signal: received from c function: %d\n", number) */
+	number := C.hello()
+	i.Logger.Printf("sending ir signal: received from c function: %d\n", number)
 
-	/* name := C.CString("Gopher")
+	name := C.CString("Gopher")
 	defer C.free(unsafe.Pointer(name))
 
 	year := C.int(2018)
@@ -72,7 +98,7 @@ func (i *InfraredManager) Send(pin, signal string) {
 	size := C.greet(name, year, (*C.char)(ptr))
 
 	b := C.GoBytes(ptr, size)
-	fmt.Println(string(b)) */
+	fmt.Println(string(b))
 
 	done := false
 	for !done {

@@ -9,7 +9,7 @@ int send(int pin, unsigned int signal) {
     return 10;
 }
 
-/* int hello() {
+int hello() {
     return 9;
 }
 
@@ -19,4 +19,4 @@ int greet(const char *name, int year, char *out) {
     n = sprintf(out, "Greetings, %s from %d! We come in peace :)", name, year);
 
     return n;
-} */
+}
