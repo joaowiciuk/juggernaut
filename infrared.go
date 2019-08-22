@@ -1,9 +1,10 @@
 package main
 
 /*
-#cgo CFLAGS: -I.
+#cgo CFLAGS: -I${SRCDIR}/c -g -Wall
+#cgo LDFLAGS: -L${SRCDIR}/c -linfrared
 #include <stdlib.h>
-#include "infrared.h"
+#include <infrared.h>
 */
 import "C"
 import (
