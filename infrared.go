@@ -49,7 +49,7 @@ func (i *InfraredManager) Close() {
 
 func (i *InfraredManager) Send(pin, signal string) {
 	cReturn := C.send(C.int(24), C.uint(12))
-	i.Logger.Printf("sending ir signal: received from c function: %d\n", int(cReturn))
+	i.Logger.Printf("sending ir signal: received from c function: %v\n", int(cReturn))
 	done := false
 	for !done {
 		cli := fmt.Sprintf("sudo /home/pi/go/src/joaowiciuk/juggernaut/c/./irsend %s %s", pin, signal)
