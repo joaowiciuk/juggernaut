@@ -1,8 +1,9 @@
 package main
 
 // #cgo CFLAGS: -g -Wall
+// #cgo LDFLAGS: -L${SRCDIR}/c -linfrared
 // #include <stdlib.h>
-// #include "./c/greeter.h"
+// #include "infrared.h"
 import "C"
 
 import (
@@ -48,7 +49,7 @@ func (i *InfraredManager) Close() {
 }
 
 func (i *InfraredManager) Send(pin, signal string) {
-	/* cPin := C.int(24)
+	cPin := C.int(24)
 	cSignal := C.uint(12)
 	cReturn := C.send(cPin, cSignal)
 	i.Logger.Printf("sending ir signal: cPin: %d\n", cPin)
@@ -59,7 +60,7 @@ func (i *InfraredManager) Send(pin, signal string) {
 	i.Logger.Printf("sending ir signal: received from c function: %d\n", lifeMeaning)
 
 	number := C.hello()
-	i.Logger.Printf("sending ir signal: received from c function: %d\n", number) */
+	i.Logger.Printf("sending ir signal: received from c function: %d\n", number)
 
 	name := C.CString("Gopher")
 	defer C.free(unsafe.Pointer(name))
