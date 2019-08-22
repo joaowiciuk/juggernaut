@@ -1,6 +1,7 @@
 package main
 
 /*
+#cgo CFLAGS: -I.
 #include <stdlib.h>
 #include "infrared.h"
 */
