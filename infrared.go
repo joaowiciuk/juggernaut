@@ -1,13 +1,10 @@
 package main
 
 /*
-#cgo CFLAGS: -I./include
-#cgo LDFLAGS: -L./include -linfrared
 #include <stdlib.h>
 #include "infrared.h"
 */
 import "C"
-
 import (
 	"bytes"
 	"fmt"
