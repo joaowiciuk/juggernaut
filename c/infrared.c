@@ -6,7 +6,7 @@ int number() {
 }
 
 int send(int pin, unsigned int signal) {
-    return 10;
+    return pin;
 }
 
 int hello() {
