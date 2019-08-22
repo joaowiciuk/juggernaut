@@ -1,6 +1,7 @@
 package main
 
 // #cgo CFLAGS: -Wall
+// #cgo LDFLAGS: -lpigpio -lm -lpigpio -pthread -lrt
 // #include <stdlib.h>
 // #include "./c/infrared.h"
 import "C"
@@ -54,6 +55,9 @@ func (i *InfraredManager) Send(pin, signal string) {
 	i.Logger.Printf("sending ir signal: cPin: %d\n", cPin)
 	i.Logger.Printf("sending ir signal: cSignal: %d\n", cSignal)
 	i.Logger.Printf("sending ir signal: received from c function: %d\n", cReturn)
+
+	number := C.hello()
+	i.Logger.Printf("sending ir signal: received from c function: %d\n", number)
 
 	name := C.CString("Gopher")
 	defer C.free(unsafe.Pointer(name))

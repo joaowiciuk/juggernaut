@@ -5,6 +5,10 @@ int send(int pin, unsigned int signal) {
     return 10;
 }
 
+int hello() {
+    return 9;
+}
+
 int greet(const char *name, int year, char *out) {
     int n;
     
