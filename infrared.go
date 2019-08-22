@@ -3,7 +3,7 @@ package main
 // #cgo CFLAGS: -Wall
 // #cgo LDFLAGS: -lpigpio -lm -lpigpio -pthread -lrt
 // #include <stdlib.h>
-// #include "./c/infrared.h"
+// #include "c/infrared.h"
 import "C"
 
 import (
