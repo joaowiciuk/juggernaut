@@ -1,6 +1,6 @@
 package main
 
-// #cgo CFLAGS: -g -Wall -I:${SRCDIR}/include
+// #cgo CFLAGS: -g -Wall -I${SRCDIR}/include
 // #include <stdlib.h>
 // #include <infrared.h>
 import "C"
