@@ -7,8 +7,6 @@ package main
 #include "infrared.h"
 */
 import "C"
-
-
 import (
 	"bytes"
 	"fmt"
