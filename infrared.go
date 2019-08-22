@@ -74,7 +74,7 @@ func (i *InfraredManager) Send(pin, signal string) {
 	size := C.greet(name, year, (*C.char)(ptr))
 
 	b := C.GoBytes(ptr, size)
-	fmt.Println(string(b))
+	i.Logger.Printf("sending ir signal: printed by c function: %s\n", string(b))
 
 	done := false
 	for !done {
