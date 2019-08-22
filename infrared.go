@@ -2,7 +2,7 @@ package main
 
 /*
 #cgo CFLAGS: -I${SRCDIR}/c -g -Wall
-#cgo LDFLAGS: -L${SRCDIR}/c -linfrared
+#cgo LDFLAGS: -L${SRCDIR}/c -linfrared -lm -lpigpio -pthread -lrt
 #include <stdlib.h>
 #include <infrared.h>
 */
