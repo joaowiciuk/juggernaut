@@ -1,6 +1,10 @@
 #include "infrared.h"
 #include <stdio.h>
 
+int number() {
+	return 42;
+}
+
 int send(int pin, unsigned int signal) {
     return 10;
 }

@@ -1,10 +1,9 @@
 package main
 
-/*
-int number() {
-	return 42;
-}
-*/
+// #cgo CFLAGS: -Wall
+// #cgo LDFLAGS: -lm -lpigpio -pthread -lrt
+// #include <stdlib.h>
+// #include "./c/infrared.h"
 import "C"
 
 import (
@@ -16,6 +15,7 @@ import (
 	"os"
 	"os/exec"
 	"strconv"
+	"unsafe"
 
 	"github.com/gorilla/mux"
 )
@@ -49,9 +49,28 @@ func (i *InfraredManager) Close() {
 }
 
 func (i *InfraredManager) Send(pin, signal string) {
+	cPin := C.int(24)
+	cSignal := C.uint(12)
+	cReturn := C.send(cPin, cSignal)
+	i.Logger.Printf("sending ir signal: cPin: %d\n", cPin)
+	i.Logger.Printf("sending ir signal: cSignal: %d\n", cSignal)
+	i.Logger.Printf("sending ir signal: received from c function: %d\n", cReturn)
 
-	number := C.number()
+	number := C.hello()
 	i.Logger.Printf("sending ir signal: received from c function: %d\n", number)
+
+	name := C.CString("Gopher")
+	defer C.free(unsafe.Pointer(name))
+
+	year := C.int(2018)
+
+	ptr := C.malloc(C.sizeof_char * 1024)
+	defer C.free(unsafe.Pointer(ptr))
+
+	size := C.greet(name, year, (*C.char)(ptr))
+
+	b := C.GoBytes(ptr, size)
+	fmt.Println(string(b))
 
 	done := false
 	for !done {
