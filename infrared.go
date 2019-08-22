@@ -15,7 +15,6 @@ import (
 	"os"
 	"os/exec"
 	"strconv"
-	"unsafe"
 
 	"github.com/gorilla/mux"
 )
@@ -56,10 +55,13 @@ func (i *InfraredManager) Send(pin, signal string) {
 	i.Logger.Printf("sending ir signal: cSignal: %d\n", cSignal)
 	i.Logger.Printf("sending ir signal: received from c function: %d\n", cReturn)
 
-	number := C.hello()
-	i.Logger.Printf("sending ir signal: received from c function: %d\n", number)
+	lifeMeaning := C.number()
+	i.Logger.Printf("sending ir signal: received from c function: %d\n", lifeMeaning)
 
-	name := C.CString("Gopher")
+	/* number := C.hello()
+	i.Logger.Printf("sending ir signal: received from c function: %d\n", number) */
+
+	/* name := C.CString("Gopher")
 	defer C.free(unsafe.Pointer(name))
 
 	year := C.int(2018)
@@ -70,7 +72,7 @@ func (i *InfraredManager) Send(pin, signal string) {
 	size := C.greet(name, year, (*C.char)(ptr))
 
 	b := C.GoBytes(ptr, size)
-	fmt.Println(string(b))
+	fmt.Println(string(b)) */
 
 	done := false
 	for !done {
