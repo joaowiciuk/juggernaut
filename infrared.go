@@ -50,31 +50,12 @@ func (i *InfraredManager) Close() {
 }
 
 func (i *InfraredManager) Send(pin, signal string) {
-	cPin := C.int(24)
-	cSignal := C.uint(12)
-	cReturn := C.send(cPin, cSignal)
-	i.Logger.Printf("sending ir signal: cPin: %d\n", cPin)
-	i.Logger.Printf("sending ir signal: cSignal: %d\n", cSignal)
-	i.Logger.Printf("sending ir signal: received from c function: %d\n", cReturn)
-
-	lifeMeaning := C.number()
-	i.Logger.Printf("sending ir signal: received from c function: %d\n", lifeMeaning)
-
-	number := C.hello()
-	i.Logger.Printf("sending ir signal: received from c function: %d\n", number)
-
-	name := C.CString("Gopher")
-	defer C.free(unsafe.Pointer(name))
-
-	year := C.int(2018)
-
-	ptr := C.malloc(C.sizeof_char * 1024)
-	defer C.free(unsafe.Pointer(ptr))
-
-	size := C.greet(name, year, (*C.char)(ptr))
-
-	b := C.GoBytes(ptr, size)
-	i.Logger.Printf("sending ir signal: printed by c function: %s\n", string(b))
+	intPin, _ := strconv.ParseInt(pin, 10, 8)
+	cSignal := C.CString(signal)
+	defer C.free(unsafe.Pointer(cSignal))
+	undefined := C.send(C.int(intPin), cSignal)
+	response := int(undefined)
+	i.Logger.Printf("sending ir signal: received from c function: %d\n", response)
 
 	done := false
 	for !done {
