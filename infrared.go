@@ -1,34 +1,8 @@
 package main
 
-/*
-#include <stdio.h>
-#include <stdlib.h>
-
-int number();
-int send(int pin, unsigned int signal);
-int hello();
-int greet(const char *name, int year, char *out);
-
-int number() {
-	return 42;
-}
-
-int send(int pin, unsigned int signal) {
-    return pin;
-}
-
-int hello() {
-    return 9;
-}
-
-int greet(const char *name, int year, char *out) {
-    int n;
-
-    n = sprintf(out, "Greetings, %s from %d! We come in peace :)", name, year);
-
-    return n;
-}
-*/
+// #cgo CFLAGS: -g -Wall
+// #include <stdlib.h>
+// #include "c/infrared.h"
 import "C"
 
 import (
