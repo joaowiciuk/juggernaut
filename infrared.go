@@ -48,8 +48,12 @@ func (i *InfraredManager) Close() {
 }
 
 func (i *InfraredManager) Send(pin, signal string) {
-	cReturn := C.send(C.int(24), C.uint(12))
-	i.Logger.Printf("sending ir signal: received from c function: %v\n", int(cReturn))
+	cPin := C.int(24)
+	cSignal := C.uint(12)
+	cReturn := C.send(cPin, cSignal)
+	i.Logger.Printf("sending ir signal: cPin: %d\n", cPin)
+	i.Logger.Printf("sending ir signal: cSignal: %d\n", cSignal)
+	i.Logger.Printf("sending ir signal: received from c function: %d\n", cReturn)
 	done := false
 	for !done {
 		cli := fmt.Sprintf("sudo /home/pi/go/src/joaowiciuk/juggernaut/c/./irsend %s %s", pin, signal)
