@@ -1,8 +1,9 @@
 package main
 
-// #cgo CFLAGS: -g -Wall
+// #cgo CFLAGS: -Wall
+// #cgo LDFLAGS: -lpigpio -lm -lpigpio -pthread -lrt
 // #include <stdlib.h>
-// #include "./c/greeter.h"
+// #include "./c/infrared.h"
 import "C"
 
 import (
@@ -14,7 +15,6 @@ import (
 	"os"
 	"os/exec"
 	"strconv"
-	"unsafe"
 
 	"github.com/gorilla/mux"
 )
@@ -48,20 +48,12 @@ func (i *InfraredManager) Close() {
 }
 
 func (i *InfraredManager) Send(pin, signal string) {
-
-	name := C.CString("Gopher")
-	defer C.free(unsafe.Pointer(name))
-
-	year := C.int(2018)
-
-	ptr := C.malloc(C.sizeof_char * 1024)
-	defer C.free(unsafe.Pointer(ptr))
-
-	size := C.greet(name, year, (*C.char)(ptr))
-
-	b := C.GoBytes(ptr, size)
-	i.Logger.Printf("sending ir signal: %v\n", string(b))
-
+	cPin := C.int(24)
+	cSignal := C.uint(12)
+	cReturn := C.send(cPin, cSignal)
+	i.Logger.Printf("sending ir signal: cPin: %d\n", cPin)
+	i.Logger.Printf("sending ir signal: cSignal: %d\n", cSignal)
+	i.Logger.Printf("sending ir signal: received from c function: %d\n", cReturn)
 	done := false
 	for !done {
 		cli := fmt.Sprintf("sudo /home/pi/go/src/joaowiciuk/juggernaut/c/./irsend %s %s", pin, signal)
