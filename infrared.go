@@ -1,7 +1,7 @@
 package main
 
 // #cgo CFLAGS: -g -Wall -I ${SRCDIR}/c
-// #cgo LDFLAGS: -L ${SRCDIR}/c -lgreeter
+// #cgo LDFLAGS: -L ${SRCDIR}/c
 // #include <stdlib.h>
 // #include "greeter.h"
 import "C"
