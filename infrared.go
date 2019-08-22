@@ -4,7 +4,6 @@ package main
 // #include <stdlib.h>
 // #include "infrared.h"
 import "C"
-
 import (
 	"bytes"
 	"fmt"
