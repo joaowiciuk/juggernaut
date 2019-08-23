@@ -65,19 +65,26 @@ func (dm *DatabaseManager) DeleteEquipment(equipment Equipment) Equipment {
 	return equipment
 }
 
-func (dm *DatabaseManager) UpdateDevice(device Device) Device {
-	if !dm.Kernel.NewRecord(device) {
-		dm.Logger.Printf("updating device: can't insert new device. Try updating it.\n")
-		return Device{}
-	}
-	dm.Kernel.Save(&device)
-	return device
+func (dm *DatabaseManager) ReadInfo() Info {
+	var info Info
+	dm.Kernel.First(&info)
+	return info
 }
 
-func (dm *DatabaseManager) ReadDevice() Device {
-	var device Device
-	dm.Kernel.First(&device)
-	return device
+func (dm *DatabaseManager) WriteInfo(info Info) Info {
+	dm.Kernel.Save(&info)
+	return info
+}
+
+func (dm *DatabaseManager) ReadCustomer() Customer {
+	var customer Customer
+	dm.Kernel.First(&customer)
+	return customer
+}
+
+func (dm *DatabaseManager) WriteCustomer(customer Customer) Customer {
+	dm.Kernel.Save(&customer)
+	return customer
 }
 
 func (dm *DatabaseManager) Open(url string) *gorm.DB {
@@ -89,8 +96,9 @@ func (dm *DatabaseManager) Open(url string) *gorm.DB {
 
 	db.LogMode(true)
 
-	db.AutoMigrate(&Device{})
 	db.AutoMigrate(&Equipment{})
+	db.AutoMigrate(&Info{})
+	db.AutoMigrate(&Customer{})
 
 	return db
 }

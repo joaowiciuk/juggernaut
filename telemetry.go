@@ -56,8 +56,8 @@ func (t *TelemetryManager) Communicate() {
 	defer t.Communicate()
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt)
-	device := t.DatabaseManager.ReadDevice()
-	environment := device.Info.Environment
+	info := t.DatabaseManager.ReadInfo()
+	environment := info.Environment
 	var host string
 	if environment == EnvironmentDevelopment {
 		host = "179.234.70.32:8081"
@@ -104,10 +104,10 @@ func (t *TelemetryManager) Communicate() {
 			isUp = false
 		case instant := <-ticker.C:
 			telemetryInfo := TelemetryInfo{
-				Identifier:  device.Info.Identifier,
+				Identifier:  info.Identifier,
 				LastUpdate:  instant,
 				Temperature: t.DeviceManager.Temperature(),
-				UUID:        device.Info.UUID,
+				UUID:        info.UUID,
 			}
 			err = c.WriteJSON(telemetryInfo)
 			if err != nil {

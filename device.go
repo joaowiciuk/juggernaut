@@ -22,32 +22,30 @@ const (
 type DeviceManager struct {
 	LogFile *os.File
 	Logger  *log.Logger
+	*DatabaseManager
 }
 
-type Device struct {
-	ID uint `json:"id" gorm:"primary_key"`
+type Info struct {
+	ID          int `json:"id" gorm:"primary_key"`
+	DeviceID    int
+	UUID        string `json:"uuid"`
+	Identifier  string `json:"identifier"`
+	Environment string `json:"environment"`
+}
 
-	Info struct {
-		UUID        string `json:"uuid"`
-		Identifier  string `json:"identifier"`
-		Environment string `json:"environment"`
-	} `json:"device"`
+type Network struct {
+	Inet  string `json:"inet"`
+	IP    string `json:"ip"`
+	Cloud string `json:"cloud"` //http://solutech.site
+}
 
-	Network struct {
-		Inet          string `json:"inet"`
-		HostCloud     string `json:"host_cloud"`
-		HostDebugging string `json:"host_debugging"`
-	} `json:"network"`
-
-	Customer struct {
-		Name     string `json:"name"`
-		Account  string `json:"account"`
-		Password string `json:"password"`
-	} `json:"customer"`
-
-	CreatedAt time.Time  `json:"created_at"`
-	UpdatedAt time.Time  `json:"updated_at"`
-	DeletedAt *time.Time `json:"deleted_at" sql:"index"`
+type Customer struct {
+	ID       int `json:"id" gorm:"primary_key"`
+	DeviceID int
+	Name     string `json:"name"`
+	Account  string `json:"account"`
+	Password string `json:"password" gorm:"-"`
+	Hash     string `json:"hash"`
 }
 
 type Wifi struct {
@@ -64,13 +62,14 @@ func NewDeviceManager() *DeviceManager {
 	return &DeviceManager{}
 }
 
-func (d *DeviceManager) Initialize(logPath string) (err error) {
+func (d *DeviceManager) Initialize(logPath string, databaseManager *DatabaseManager) (err error) {
 	f, err := os.OpenFile(logPath, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0666)
 	if err != nil {
 		return err
 	}
 	d.LogFile = f
 	d.Logger = log.New(d.LogFile, "", log.Ldate|log.Ltime)
+	d.DatabaseManager = databaseManager
 	d.Logger.Printf("DeviceManager started.\n")
 	return nil
 }
@@ -195,4 +194,57 @@ func (d *DeviceManager) AnalogVariance() float64 {
 	}
 	d.Logger.Printf("Analog variance: %.3f\n", analogVariance)
 	return analogVariance
+}
+
+func (d *DeviceManager) Network() (network Network) {
+	network = Network{
+		Inet:  d.Inet(),
+		IP:    d.IP(),
+		Cloud: "http://solutech.site",
+	}
+	return
+}
+
+func (d *DeviceManager) Inet() (inet string) {
+	done := false
+	for !done {
+		cmd := exec.Command("/bin/sh", "-c", "ifconfig | grep inet")
+		stdout, _ := cmd.StdoutPipe()
+		cmd.Start()
+		buf := new(bytes.Buffer)
+		buf.ReadFrom(stdout)
+		output := buf.String()
+		if err := cmd.Wait(); err != nil {
+			d.Logger.Println(err)
+			time.Sleep(time.Millisecond * 250)
+			continue
+		}
+		re := regexp.MustCompile(`\ +inet (\d+\.\d+\.\d+\.\d+)\ +netmask\ +\d+\.\d+\.\d+\.\d+\ +broadcast\ +\d+\.\d+\.\d+\.\d+`)
+		submatches := re.FindAllStringSubmatch(output, -1)
+		inet = submatches[0][1]
+		done = true
+	}
+	return
+}
+
+func (d *DeviceManager) IP() (ip string) {
+	done := false
+	for !done {
+		cmd := exec.Command("/bin/sh", "-c", "curl ifconfig.co")
+		stdout, _ := cmd.StdoutPipe()
+		cmd.Start()
+		buf := new(bytes.Buffer)
+		buf.ReadFrom(stdout)
+		output := buf.String()
+		if err := cmd.Wait(); err != nil {
+			d.Logger.Println(err)
+			time.Sleep(time.Second * 3)
+			continue
+		}
+		re := regexp.MustCompile(`(\d+\.\d+\.\d+\.\d+)`)
+		submatches := re.FindAllStringSubmatch(output, -1)
+		ip = submatches[0][1]
+		done = true
+	}
+	return
 }

@@ -1,2 +1,3 @@
 config/config.json
 c/libinfrared.so
+c/libpigpio.so

@@ -56,7 +56,7 @@ func (e *EquipmentManager) Close() {
 }
 
 type Equipment struct {
-	ID uint `json:"id" gorm:"primary_key"`
+	ID int `json:"id" gorm:"primary_key"`
 
 	Name         string `json:"name"`
 	Type         string `json:"type"`

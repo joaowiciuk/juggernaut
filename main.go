@@ -35,19 +35,19 @@ func main() {
 	}
 	defer securityManager.Close()
 
-	//deviceManager
-	deviceManager := NewDeviceManager()
-	if err := deviceManager.Initialize("log/device"); err != nil {
-		log.Fatalf("main(): Initializing deviceManager: %v\n", err)
-	}
-	defer deviceManager.Close()
-
 	//Inicialização do banco de dados
 	databaseManager := NewDatabaseManager()
 	if err := databaseManager.Initialize("log/database", "DATABASE"); err != nil {
 		log.Fatalf("main(): Initializing databaseManager: %v\n", err)
 	}
 	defer databaseManager.Close()
+
+	//deviceManager
+	deviceManager := NewDeviceManager()
+	if err := deviceManager.Initialize("log/device", databaseManager); err != nil {
+		log.Fatalf("main(): Initializing deviceManager: %v\n", err)
+	}
+	defer deviceManager.Close()
 
 	//EquipmentManager
 	equipmentManager := NewEquipmentManager()

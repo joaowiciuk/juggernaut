@@ -16,9 +16,16 @@ import (
 	"os"
 	"os/exec"
 	"strconv"
+	"time"
 	"unsafe"
 
 	"github.com/gorilla/mux"
+)
+
+const (
+	TypeRGB = "rgb"
+	TypeTV  = "tv"
+	TypeAC = "ac"
 )
 
 //	Responsibilities:
@@ -47,6 +54,27 @@ func (i *InfraredManager) Initialize(logPath string) (err error) {
 func (i *InfraredManager) Close() {
 	i.Logger.Printf("InfraredManager closed.\n")
 	i.LogFile.Close()
+}
+
+type Infrared struct {
+	ID int `json:"id" gorm:"primary_key"`
+
+	Name     string    `json:"name"`
+	Type     string    `json:"type"`
+	Pin      int       `json:"pin"`
+	Commands []Command `json:"commands"`
+
+	CreatedAt time.Time  `json:"created_at"`
+	UpdatedAt time.Time  `json:"updated_at"`
+	DeletedAt *time.Time `json:"deleted_at" sql:"index"`
+}
+
+type Command struct {
+	ID         int `json:"id" gorm:"primary_key"`
+	InfraredID int `json:"infrared_id"`
+
+	Code   string `json:"code"`
+	Button int    `json:"button"`
 }
 
 func (i *InfraredManager) Send(pin, signal string) {
@@ -140,6 +168,11 @@ func (i *InfraredManager) SendHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (i *InfraredManager) ReceiveHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Add("Access-Control-Allow-Origin", "*")
+	fmt.Fprintf(w, "%s", i.Receive())
+}
+
+func (i *InfraredManager) IOHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Access-Control-Allow-Origin", "*")
 	fmt.Fprintf(w, "%s", i.Receive())
 }
