@@ -102,7 +102,23 @@ func (bm *BluetoothManager) Service() *gatt.Service {
 			if !notifyTemperature {
 				continue
 			}
-			fmt.Fprintf(notifier, "%.2f", bm.DeviceManager.Temperature())
+			temperatureRead := bm.DeviceManager.Temperature()
+			bm.Logger.Printf("temperature read: %.2f\n", temperatureRead.TemperatureValue)
+			source, err := json.Marshal(temperatureRead)
+			if err != nil {
+				bm.Logger.Printf("marshalling temperature: %v\n", err)
+				continue
+			}
+			reader := bytes.NewReader(source)
+			transf := make([]byte, 20)
+			for {
+				k, err := reader.Read(transf)
+				if err == io.EOF {
+					break
+				}
+				bm.Logger.Printf("transf[:%d] = %q\n", k, transf[:k])
+				fmt.Fprintf(notifier, "%s", transf[:k])
+			}
 			notifyTemperature = false
 		}
 	})

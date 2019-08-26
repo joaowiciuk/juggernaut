@@ -33,6 +33,10 @@ type Info struct {
 	Environment string `json:"environment"`
 }
 
+type Temperature struct {
+	TemperatureValue float64 `json:"temperature_value"`
+}
+
 type Network struct {
 	Inet  string `json:"inet"`
 	IP    string `json:"ip"`
@@ -131,7 +135,7 @@ func (d *DeviceManager) Wifis() (wifis []Wifi) {
 	return wifis
 }
 
-func (d *DeviceManager) Temperature() float64 {
+func (d *DeviceManager) Temperature() (temperature Temperature) {
 	done := false
 	var temp float64
 	for !done {
@@ -165,7 +169,9 @@ func (d *DeviceManager) Temperature() float64 {
 		}
 		done = true
 	}
-	return temp
+	return Temperature{
+		TemperatureValue: temp,
+	}
 }
 
 func (d *DeviceManager) AnalogVariance() float64 {

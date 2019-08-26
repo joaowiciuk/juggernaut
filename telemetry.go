@@ -106,7 +106,7 @@ func (t *TelemetryManager) Communicate() {
 			telemetryInfo := TelemetryInfo{
 				Identifier:  info.Identifier,
 				LastUpdate:  instant,
-				Temperature: t.DeviceManager.Temperature(),
+				Temperature: t.DeviceManager.Temperature().TemperatureValue,
 				UUID:        info.UUID,
 			}
 			err = c.WriteJSON(telemetryInfo)
