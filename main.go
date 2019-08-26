@@ -49,12 +49,12 @@ func main() {
 	}
 	defer deviceManager.Close()
 
-	//EquipmentManager
-	equipmentManager := NewEquipmentManager()
-	if err := equipmentManager.Initialize("log/equipment", databaseManager, deviceManager); err != nil {
-		log.Fatalf("main(): Initializing equipmentManager: %v\n", err)
+	//RelayManager
+	relayManager := NewRelayManager()
+	if err := relayManager.Initialize("log/relay", databaseManager, deviceManager); err != nil {
+		log.Fatalf("main(): Initializing relayManager: %v\n", err)
 	}
-	defer equipmentManager.Close()
+	defer relayManager.Close()
 
 	//wifiManager
 	wifiManager := NewWifiManager()
@@ -62,8 +62,8 @@ func main() {
 		log.Fatalf("main(): Initializing wifiManager: %v\n", err)
 	}
 	defer wifiManager.Close()
-	wifiManager.AddHandler(equipmentManager.OperationHandler, "/api/equipment/{command}", "POST")
-	wifiManager.AddHandler(equipmentManager.EquipmentHandler, "/api/equipment", "GET")
+	wifiManager.AddHandler(relayManager.OperationHandler, "/api/relay/{command}", "POST")
+	wifiManager.AddHandler(relayManager.RelayHandler, "/api/relay", "GET")
 	wifiManager.AddHandler(infraredManager.SendHandler, "/api/infrared/send/{pin}/{signal}", "GET")
 	wifiManager.AddHandler(infraredManager.ReceiveHandler, "/api/infrared/receive", "GET")
 

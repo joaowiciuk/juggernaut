@@ -10,8 +10,12 @@ import (
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 )
 
-//	Responsibilities:
-//	*	To persist and to recover reusable data structures
+/*
+	Responsibilities:
+	*	To persist and to recover reusable data structures
+	Restrictions:
+	*	No update allowed, only rewritings
+*/
 //	DatabaseManager
 type DatabaseManager struct {
 	Kernel  *gorm.DB
@@ -44,25 +48,25 @@ func (dm *DatabaseManager) Close() {
 	dm.LogFile.Close()
 }
 
-func (dm *DatabaseManager) CreateEquipment(equipment Equipment) Equipment {
-	dm.Kernel.Create(&equipment)
-	return equipment
+func (dm *DatabaseManager) CreateRelay(relay Relay) (created Relay) {
+	dm.Kernel.Create(&relay)
+	return relay
 }
 
-func (dm *DatabaseManager) ReadEquipment() []Equipment {
-	var equipment []Equipment
-	dm.Kernel.Find(&equipment)
-	return equipment
+func (dm *DatabaseManager) ReadRelay() []Relay {
+	var relay []Relay
+	dm.Kernel.Find(&relay)
+	return relay
 }
 
-func (dm *DatabaseManager) UpdateEquipment(equipment Equipment) Equipment {
-	dm.Kernel.Save(&equipment)
-	return equipment
+func (dm *DatabaseManager) UpdateRelay(relay Relay) (updated Relay) {
+	dm.Kernel.Save(&relay)
+	return relay
 }
 
-func (dm *DatabaseManager) DeleteEquipment(equipment Equipment) Equipment {
-	dm.Kernel.Delete(&equipment)
-	return equipment
+func (dm *DatabaseManager) DeleteRelay(relay Relay) (deleted Relay) {
+	dm.Kernel.Delete(&relay)
+	return relay
 }
 
 func (dm *DatabaseManager) ReadInfo() Info {
@@ -96,7 +100,7 @@ func (dm *DatabaseManager) Open(url string) *gorm.DB {
 
 	db.LogMode(true)
 
-	db.AutoMigrate(&Equipment{})
+	db.AutoMigrate(&Relay{})
 	db.AutoMigrate(&Info{})
 	db.AutoMigrate(&Customer{})
 

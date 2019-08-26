@@ -6,7 +6,7 @@ import (
 )
 
 //	Responsibilities:
-//	*	To schedule future equipment and infrared operations
+//	*	To schedule future relay and infrared operations
 //	ScheduleManager
 type ScheduleManager struct {
 	DatabaseManager *DatabaseManager

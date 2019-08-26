@@ -6,7 +6,7 @@ import (
 )
 
 //	Abstract responsibilities:
-//	*	To refuse non authorized equipment and infrared operations
+//	*	To refuse non authorized relay and infrared operations
 //	*	To refuse non authorized device configuration
 //	Concrete responsibilities:
 //	*	To manipulate a role system
