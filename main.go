@@ -62,8 +62,8 @@ func main() {
 		log.Fatalf("main(): Initializing wifiManager: %v\n", err)
 	}
 	defer wifiManager.Close()
-	wifiManager.AddHandler(relayManager.OperationHandler, "/api/relay/{command}", "POST")
-	wifiManager.AddHandler(relayManager.RelayHandler, "/api/relay", "GET")
+	wifiManager.AddHandler(relayManager.OperationHandler, "/api/relays/{command}", "POST")
+	wifiManager.AddHandler(relayManager.RelayHandler, "/api/relays", "GET")
 	wifiManager.AddHandler(infraredManager.SendHandler, "/api/infrared/send/{pin}/{signal}", "GET")
 	wifiManager.AddHandler(infraredManager.ReceiveHandler, "/api/infrared/receive", "GET")
 
