@@ -89,14 +89,21 @@ func (bm *BluetoothManager) OnDisconnect() (f func(gatt.Central)) {
 func (bm *BluetoothManager) Service() *gatt.Service {
 	s := gatt.NewService(gatt.MustParseUUID("b2ac313f-fbab-47d5-9829-81b6887151a3"))
 
+	notifyTemperature := false
 	temperature := s.AddCharacteristic(gatt.MustParseUUID("aee5af4f-d1a8-4855-b770-b912519327d6"))
-	temperature.HandleReadFunc(func(rsp gatt.ResponseWriter, req *gatt.ReadRequest) {
-		fmt.Fprintf(rsp, "%.2f", bm.DeviceManager.Temperature())
-		rsp.SetStatus(gatt.StatusSuccess)
+	temperature.HandleWriteFunc(func(r gatt.Request, data []byte) (status byte) {
+		if strings.ToLower(string(data)) == "y" {
+			notifyTemperature = true
+		}
+		return gatt.StatusSuccess
 	})
 	temperature.HandleNotifyFunc(func(r gatt.Request, notifier gatt.Notifier) {
 		for !notifier.Done() {
+			if !notifyTemperature {
+				continue
+			}
 			fmt.Fprintf(notifier, "%.2f", bm.DeviceManager.Temperature())
+			notifyTemperature = false
 		}
 	})
 
