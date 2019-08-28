@@ -114,6 +114,7 @@ func (bm *BluetoothManager) Service() *gatt.Service {
 			for {
 				k, err := reader.Read(transf)
 				if err == io.EOF {
+					fmt.Fprintf(notifier, "end")
 					break
 				}
 				bm.Logger.Printf("transf[:%d] = %q\n", k, transf[:k])
