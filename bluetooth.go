@@ -128,6 +128,7 @@ func (bm *BluetoothManager) Service() *gatt.Service {
 	wifi.HandleWriteFunc(func(r gatt.Request, data []byte) (status byte) {
 		if strings.ToLower(string(data)) == "y" {
 			notifyWifi = true
+			return gatt.StatusSuccess
 		}
 		return gatt.StatusSuccess
 	})
@@ -194,6 +195,7 @@ func (bm *BluetoothManager) Service() *gatt.Service {
 			for {
 				k, err := reader.Read(transf)
 				if err == io.EOF {
+					fmt.Fprintf(notifier, "end")
 					break
 				}
 				bm.Logger.Printf("transf[:%d] = %q\n", k, transf[:k])
